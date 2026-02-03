@@ -1,12 +1,12 @@
-// Updated: add type 1 (redirect) and type 2 (POST) responseURIs from config REDIRECTS.
+// Updated: use remote API + env WIF for offline signing (no local node).
 import { BN } from 'bn.js';
-import { IdentityUpdateRequestDetails, LOGIN_CONSENT_RESPONSE_SIG_VDXF_KEY, VerusIDSignature, GenericRequest, IdentityUpdateRequestOrdinalVDXFObject, VerifiableSignatureData, CompactAddressObject, ResponseURI } from 'verus-typescript-primitives';
-import { VerusIdInterface, primitives } from 'verusid-ts-client'
+import { IdentityUpdateRequestDetails, GenericRequest, IdentityUpdateRequestOrdinalVDXFObject, VerifiableSignatureData, CompactAddressObject, ResponseURI } from 'verus-typescript-primitives';
+import { VerusIdInterface } from 'verusid-ts-client'
+import { ECPair, networks } from '@bitgo/utxo-lib';
 
 const { 
-  RPC_USER, 
-  RPC_PORT, 
-  RPC_PASSWORD,
+  API_BASE_URL,
+  SYSTEM_I_ADDRESS,
   JSON_IDENTITY_CHANGES,
   REQUEST_ID,
   REDIRECTS,
@@ -14,12 +14,72 @@ const {
 } = require("../config.js");
 const qrcode = require('qrcode-terminal');
 
-const VerusId = new VerusIdInterface("iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq", `http://localhost:${RPC_PORT}`, {
-  auth: {
-    username: RPC_USER,
-    password: RPC_PASSWORD
-  },
-});
+function requireEnvVar(name: string) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing ${name} environment variable.`);
+  }
+  return value;
+}
+
+const SIGNING_WIF = requireEnvVar("VERUS_SIGNING_WIF");
+
+if (!API_BASE_URL) {
+  throw new Error("Missing API_BASE_URL in config.js.");
+}
+
+if (!SYSTEM_I_ADDRESS) {
+  throw new Error("Missing SYSTEM_I_ADDRESS in config.js.");
+}
+
+if (!SIGNING_ID) {
+  throw new Error("Missing SIGNING_ID in config.js.");
+}
+
+const VerusId = new VerusIdInterface(SYSTEM_I_ADDRESS, API_BASE_URL);
+
+function getSigningAddressFromWif(wif: string) {
+  return ECPair.fromWIF(wif, networks.verustest).getAddress();
+}
+
+function assertSingleSigIdentity(identityResult: any, signingAddress: string) {
+  if (identityResult.status !== "active") {
+    throw new Error("Signing identity is not active.");
+  }
+
+  const minSigs = identityResult.identity?.minimumsignatures;
+
+  if (minSigs !== 1) {
+    throw new Error("Signing identity must be single-sig (minimumsignatures = 1).");
+  }
+
+  const primaryAddresses = identityResult.identity?.primaryaddresses;
+
+  if (!Array.isArray(primaryAddresses) || primaryAddresses.length === 0) {
+    throw new Error("Signing identity has no primary addresses.");
+  }
+
+  if (!primaryAddresses.includes(signingAddress)) {
+    throw new Error("VERUS_SIGNING_WIF does not match any primary address for SIGNING_ID.");
+  }
+}
+
+async function fetchSigningContext(signingId: string, signingAddress: string) {
+  const [infoRes, identityRes] = await Promise.all([
+    VerusId.interface.getInfo(),
+    VerusId.interface.getIdentity(signingId)
+  ]);
+
+  if (infoRes.error) throw new Error(infoRes.error.message);
+  if (identityRes.error) throw new Error(identityRes.error.message);
+
+  const identityResult = identityRes.result!;
+  const currentHeight = infoRes.result!.longestchain;
+
+  assertSingleSigIdentity(identityResult, signingAddress);
+
+  return { identityResult, currentHeight };
+}
 
 async function main() {
   const dets = IdentityUpdateRequestDetails.fromCLIJson(
@@ -40,7 +100,7 @@ async function main() {
       .filter((redirect): redirect is ResponseURI => redirect != null)
     : undefined;
 
-  const req = new primitives.GenericRequest({
+  const req = new GenericRequest({
     details: [new IdentityUpdateRequestOrdinalVDXFObject({
       data: dets
     })],
@@ -49,21 +109,17 @@ async function main() {
   });
 
   req.signature = new VerifiableSignatureData({
-    systemID: CompactAddressObject.fromIAddress("iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq"),
+    systemID: CompactAddressObject.fromIAddress(SYSTEM_I_ADDRESS),
     identityID: CompactAddressObject.fromIAddress(SIGNING_ID)
   })
 
-  req.setSigned()
   req.setIsTestnet()
 
-  const sigRes = await VerusId.interface.signData({
-    address: SIGNING_ID,
-    datahash: req.getRawDataSha256().toString('hex')
-  })
+  const signingAddress = getSigningAddressFromWif(SIGNING_WIF);
+  const { identityResult, currentHeight } = await fetchSigningContext(SIGNING_ID, signingAddress);
+  const signedReq = await VerusId.signGenericRequest(req, SIGNING_WIF, identityResult, currentHeight);
 
-  req.signature.signatureAsVch = Buffer.from(sigRes.result!.signature!, 'base64')
-
-  const dl = req.toWalletDeeplinkUri();
+  const dl = signedReq.toWalletDeeplinkUri();
   
   qrcode.generate(dl);
   console.log(dl)

@@ -1,3 +1,4 @@
+<!-- Updated: document remote API + env WIF signing (no local node). -->
 # Verus Identity Update QR Creator
 
 A tool for generating QR codes and deeplinks that trigger `updateidentity` calls in Verus Mobile wallets.
@@ -8,20 +9,19 @@ This project creates signed requests that can be scanned or clicked by Verus Mob
 
 ## Prerequisites
 
-- A running Verus testnet daemon (verusd) with RPC access
-- A VerusID in your wallet to sign the request
+- Access to a vrsctest JSON-RPC endpoint (default: `https://api.verustest.net/`)
+- A single-sig VerusID (primary address WIF available)
 - Node.js and Yarn
 
 ## Configuration
 
 Edit `config.js` to configure your request:
 
-### RPC Settings
+### Remote API Settings
 
 ```javascript
-RPC_PORT: 18843,
-RPC_USER: "your-rpc-user",
-RPC_PASSWORD: "your-rpc-password",
+API_BASE_URL: "https://api.verustest.net/",
+SYSTEM_I_ADDRESS: "iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq",
 ```
 
 ### Identity Changes
@@ -47,11 +47,21 @@ REQUEST_ID: "iJitWFN8PY37GrBVtF38HyftG8WohWipbL",
 
 ### Signing Identity
 
-The VerusID from your running wallet that will sign the request:
+The VerusID that will sign the request (must be single-sig):
 
 ```javascript
 SIGNING_ID: "i89UVSuN6vfWg1mWpXMuc6dsJBdeYTi7bX",
 ```
+
+### Signing Key (Environment Variable)
+
+Set the primary address WIF for `SIGNING_ID` in your environment:
+
+```bash
+export VERUS_SIGNING_WIF="your-wif-here"
+```
+
+Security note: keep this value out of source control and config files. Treat it like a private key.
 
 ### Redirect URIs
 
@@ -89,8 +99,8 @@ yarn main
 ```
 
 The tool will:
-1. Connect to your local Verus daemon
-2. Create a signed identity update request
+1. Fetch identity + height from the remote API
+2. Create a signed identity update request locally (WIF-based)
 3. Display a QR code in the terminal
 4. Print the deeplink URI to the console
 
@@ -98,7 +108,7 @@ The tool will:
 
 1. The tool constructs an `IdentityUpdateRequestDetails` object from your configuration
 2. It wraps this in a `GenericRequest` with optional response URIs
-3. The request is signed using the specified signing identity via the Verus daemon
+3. The request is signed locally using `VERUS_SIGNING_WIF`
 4. The signed request is encoded as a wallet deeplink URI
 5. The URI is displayed as a QR code for Verus Mobile to scan
 

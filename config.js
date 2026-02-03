@@ -1,9 +1,8 @@
-// Updated: add sample type 2 POST callback in REDIRECTS.
+// Updated: switch to remote API settings and env-based WIF signing.
 const conf = {
-  // RPC Info
-  RPC_PORT: 18843,
-  RPC_USER: "c5dUxeBsBvaHsm8Me4sziDgGVqMx-bK8_TZDy4SWiiY",
-  RPC_PASSWORD: "51zaj-USx5fRMyB6IJEG5ugE0zUdCt7j7S5B8okw4qw",
+  // Remote API (vrsctest)
+  API_BASE_URL: "https://api.verustest.net/",
+  SYSTEM_I_ADDRESS: "iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq",
 
   // What you would normally pass to 'jsonidentity' when calling updateidentity
   JSON_IDENTITY_CHANGES: {
@@ -43,7 +42,7 @@ const conf = {
     }
   ],
 
-  // The ID you want to sign the request with (taken from your currently running wallet)
+  // The ID you want to sign the request with (single-sig primary address WIF is in VERUS_SIGNING_WIF)
   SIGNING_ID: "i89UVSuN6vfWg1mWpXMuc6dsJBdeYTi7bX",
 }
 
