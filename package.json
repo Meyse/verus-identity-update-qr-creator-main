@@ -1,0 +1,20 @@
+{
+  "name": "update-identity-request-creator",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "main": "node dist/index.js"
+  },
+  "dependencies": {
+    "@bitgo/utxo-lib": "git+https://github.com/VerusCoin/BitGoJS.git#80abaccd57652215bd5d9ebbe969ffe9c4266d25",
+    "@types/bn.js": "^5.1.6",
+    "bn.js": "^5.2.2",
+    "qrcode-terminal": "^0.12.0",
+    "verus-typescript-primitives": "git+https://github.com/michaeltout/verus-typescript-primitives.git#generic-signed-request",
+    "verusd-rpc-ts-client": "git+https://github.com/michaeltout/verusd-rpc-ts-client.git#generic-request-changes",
+    "verusid-ts-client": "git+https://github.com/michaeltout/verusid-ts-client.git#generic-request-changes"
+  },
+  "packageManager": "yarn@4.12.0"
+}
