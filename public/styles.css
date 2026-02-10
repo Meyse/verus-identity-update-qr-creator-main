@@ -1,0 +1,502 @@
+/* Updated: add invoice quick buttons and "Same as signer" button layout. */
+
+:root {
+  color-scheme: light;
+  --clr-bg: #0f1117;
+  --clr-surface: #1a1d27;
+  --clr-surface-alt: #222633;
+  --clr-border: #2d3348;
+  --clr-border-accent: #3b82f6;
+  --clr-text: #e2e8f0;
+  --clr-text-muted: #94a3b8;
+  --clr-text-dim: #64748b;
+  --clr-primary: #3b82f6;
+  --clr-primary-hover: #2563eb;
+  --clr-accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --clr-success: #22c55e;
+  --clr-error-bg: #1c1215;
+  --clr-error-border: #7f1d1d;
+  --clr-error-text: #fca5a5;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  line-height: 1.5;
+}
+
+/* ── Container ─────────────────────────────────────────────────────── */
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+
+.page-header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: var(--clr-accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--clr-text);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--clr-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Global Signing ID ─────────────────────────────────────────────── */
+
+.global-signing-id {
+  max-width: 600px;
+  border-left: 3px solid var(--clr-border-accent);
+}
+
+.global-signing-id label {
+  margin-bottom: 0;
+}
+
+.global-signing-id select,
+.global-signing-id input[type="text"] {
+  width: 100%;
+}
+
+/* ── Tab Navigation ────────────────────────────────────────────────── */
+
+.tab-nav {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--clr-surface);
+  padding: 4px;
+  border-radius: 999px;
+  width: fit-content;
+  border: 1px solid var(--clr-border);
+  margin-top: 8px;
+}
+
+.tab-button {
+  background: transparent;
+  color: var(--clr-text-muted);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.tab-button:hover {
+  color: var(--clr-text);
+}
+
+.tab-button[aria-pressed="true"] {
+  background: var(--clr-accent-gradient);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ── Split Layout ──────────────────────────────────────────────────── */
+
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 28px;
+  align-items: start;
+}
+
+.split-inputs {
+  min-width: 0;
+}
+
+.split-reference {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 960px) {
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .split-reference {
+    position: static;
+  }
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+/* ── Reference Cards ───────────────────────────────────────────────── */
+
+.ref-card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  border-left: 3px solid var(--clr-border-accent);
+}
+
+.ref-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--clr-primary);
+}
+
+.ref-desc {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  color: var(--clr-text-muted);
+  line-height: 1.4;
+}
+
+.ref-snippet {
+  background: var(--clr-surface-alt);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  position: relative;
+}
+
+.ref-snippet code,
+.ref-snippet pre {
+  font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--clr-text);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  flex: 1;
+}
+
+.ref-snippet pre code {
+  display: block;
+}
+
+/* ── Copy Button ───────────────────────────────────────────────────── */
+
+.copy-btn {
+  background: var(--clr-border);
+  color: var(--clr-text-muted);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.copy-btn:hover {
+  background: var(--clr-primary);
+  color: #fff;
+}
+
+.copy-btn.copied {
+  background: var(--clr-success);
+  color: #fff;
+}
+
+/* ── Tags (required / optional) ────────────────────────────────────── */
+
+.tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+}
+
+.tag.optional {
+  background: rgba(100, 116, 139, 0.2);
+  color: var(--clr-text-dim);
+}
+
+.tag.required {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--clr-primary);
+}
+
+/* ── Form Elements ─────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--clr-text);
+  margin-bottom: 12px;
+}
+
+.input-with-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.input-with-action input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.input-with-action button {
+  white-space: nowrap;
+}
+
+.quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quick-buttons button {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.stack {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  background: var(--clr-surface-alt);
+  color: var(--clr-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--clr-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background: rgba(30, 33, 44, 0.6);
+  color: var(--clr-text-dim);
+  cursor: not-allowed;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--clr-text-dim);
+}
+
+textarea {
+  font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+select {
+  cursor: pointer;
+}
+
+.help {
+  font-size: 0.8rem;
+  color: var(--clr-text-dim);
+  font-weight: 400;
+}
+
+.hint {
+  margin-top: 0;
+  color: var(--clr-text-muted);
+}
+
+.hint.small {
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+/* ── Checkbox styling ──────────────────────────────────────────────── */
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--clr-primary);
+  cursor: pointer;
+}
+
+/* ── Actions ───────────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+button[type="submit"] {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px 22px;
+  background: var(--clr-accent-gradient);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+button[type="submit"]:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:not([type="submit"]):not(.tab-button):not(.copy-btn) {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  background: var(--clr-surface-alt);
+  color: var(--clr-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid var(--clr-border);
+  transition: background 0.15s ease;
+}
+
+button:not([type="submit"]):not(.tab-button):not(.copy-btn):hover {
+  background: var(--clr-border);
+}
+
+.status {
+  font-size: 0.85rem;
+  color: var(--clr-text-muted);
+}
+
+/* ── Error ─────────────────────────────────────────────────────────── */
+
+.error {
+  border: 1px solid var(--clr-error-border);
+  background: var(--clr-error-bg);
+  color: var(--clr-error-text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+/* ── Result Grid ───────────────────────────────────────────────────── */
+
+.result-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.qr-wrapper {
+  border: 1px dashed var(--clr-border);
+  border-radius: var(--radius);
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--clr-surface-alt);
+}
+
+.qr-wrapper img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.result-details textarea {
+  min-height: 140px;
+}
+
+@media (max-width: 640px) {
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+}

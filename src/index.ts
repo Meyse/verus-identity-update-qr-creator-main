@@ -1,6 +1,7 @@
-// Updated: add type 1 (redirect) and type 2 (POST) responseURIs from config REDIRECTS.
+// Updated: use CompactIAddressObject for IDs and signData with the raw
+// request hash so wallet verification succeeds.
 import { BN } from 'bn.js';
-import { IdentityUpdateRequestDetails, LOGIN_CONSENT_RESPONSE_SIG_VDXF_KEY, VerusIDSignature, GenericRequest, IdentityUpdateRequestOrdinalVDXFObject, VerifiableSignatureData, CompactAddressObject, ResponseURI } from 'verus-typescript-primitives';
+import { IdentityUpdateRequestDetails, LOGIN_CONSENT_RESPONSE_SIG_VDXF_KEY, VerusIDSignature, GenericRequest, IdentityUpdateRequestOrdinalVDXFObject, VerifiableSignatureData, CompactIAddressObject, ResponseURI } from 'verus-typescript-primitives';
 import { VerusIdInterface, primitives } from 'verusid-ts-client'
 
 const { 
@@ -22,11 +23,12 @@ const VerusId = new VerusIdInterface("iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq", `http
 });
 
 async function main() {
+  const detailsOverrides = REQUEST_ID
+    ? { requestid: CompactIAddressObject.fromAddress(REQUEST_ID).toJson() }
+    : undefined;
   const dets = IdentityUpdateRequestDetails.fromCLIJson(
     JSON_IDENTITY_CHANGES,
-    {
-      requestid: REQUEST_ID
-    }
+    detailsOverrides
   )
 
   const responseUris = Array.isArray(REDIRECTS)
@@ -49,16 +51,18 @@ async function main() {
   });
 
   req.signature = new VerifiableSignatureData({
-    systemID: CompactAddressObject.fromIAddress("iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq"),
-    identityID: CompactAddressObject.fromIAddress(SIGNING_ID)
+    systemID: CompactIAddressObject.fromAddress("iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq"),
+    identityID: CompactIAddressObject.fromAddress(SIGNING_ID)
   })
 
   req.setSigned()
   req.setIsTestnet()
 
+  const rawHash = req.getRawDataSha256(false);
+
   const sigRes = await VerusId.interface.signData({
     address: SIGNING_ID,
-    datahash: req.getRawDataSha256().toString('hex')
+    datahash: rawHash.toString('hex')
   })
 
   req.signature.signatureAsVch = Buffer.from(sigRes.result!.signature!, 'base64')

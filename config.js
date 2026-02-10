@@ -35,16 +35,11 @@ const conf = {
     {
       type: "1",
       uri: "https://www.verus.io"
-    },
-    // Type 2 means the data will be sent with a POST request to the uri
-    {
-      type: "2",
-      uri: "https://example.com/callback/post-7c3b2f"
     }
   ],
 
   // The ID you want to sign the request with (taken from your currently running wallet)
-  SIGNING_ID: "i89UVSuN6vfWg1mWpXMuc6dsJBdeYTi7bX",
+  SIGNING_ID: "iJitWFN8PY37GrBVtF38HyftG8WohWipbL",
 }
 
 module.exports = conf

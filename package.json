@@ -1,20 +1,31 @@
 {
+  "_comment": "Updated: fixed git dependency URLs to match lockfile (michaeltout forks with generic-signed-request/generic-request-changes branches, BitGoJS at pinned commit). Added blake2b-wasm resolution to prevent dead BitGo/blake2b-wasm repo reference.",
   "name": "update-identity-request-creator",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "main": "node dist/index.js"
+    "main": "node dist/index.js",
+    "ui": "yarn build && node dist/server.js"
   },
   "dependencies": {
     "@bitgo/utxo-lib": "git+https://github.com/VerusCoin/BitGoJS.git#80abaccd57652215bd5d9ebbe969ffe9c4266d25",
     "@types/bn.js": "^5.1.6",
     "bn.js": "^5.2.2",
+    "express": "^5.2.1",
+    "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
-    "verus-typescript-primitives": "git+https://github.com/michaeltout/verus-typescript-primitives.git#generic-signed-request",
-    "verusd-rpc-ts-client": "git+https://github.com/michaeltout/verusd-rpc-ts-client.git#generic-request-changes",
-    "verusid-ts-client": "git+https://github.com/michaeltout/verusid-ts-client.git#generic-request-changes"
+    "verus-typescript-primitives": "git+https://github.com/VerusCoin/verus-typescript-primitives.git",
+    "verusd-rpc-ts-client": "git+https://github.com/VerusCoin/verusd-rpc-ts-client.git",
+    "verusid-ts-client": "git+https://github.com/VerusCoin/verusid-ts-client.git"
   },
-  "packageManager": "yarn@4.12.0"
+  "packageManager": "yarn@4.12.0",
+  "resolutions": {
+    "blake2b-wasm": "2.4.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/qrcode": "^1.5.6"
+  }
 }
