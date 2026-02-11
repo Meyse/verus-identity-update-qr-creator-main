@@ -36,6 +36,15 @@
           <button class="tab-button" type="button" data-tab="invoice" aria-pressed="false">
             Invoice
           </button>
+          <button class="tab-button" type="button" data-tab="app-encryption" aria-pressed="false">
+            App Encryption
+          </button>
+          <button class="tab-button" type="button" data-tab="data-packet" aria-pressed="false">
+            Data Packet
+          </button>
+          <button class="tab-button" type="button" data-tab="user-data" aria-pressed="false">
+            User Data
+          </button>
         </nav>
       </header>
 
@@ -608,6 +617,180 @@ isTestnet        - mark as testnet</code></pre>
 ]</code></pre>
                 <button class="copy-btn" type="button" data-copy='[{"type":"1","uri":"https://www.verus.io"},{"type":"2","uri":"https://api.example.com/callback"}]' title="Copy">Copy</button>
               </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===================== APP ENCRYPTION TAB ===================== -->
+      <section class="tab-panel" data-tab-panel="app-encryption" hidden>
+        <div class="split-layout">
+          <div class="split-inputs">
+            <form id="app-encryption-form">
+              <section class="card">
+                <h2>App Encryption Request</h2>
+                <p class="hint">Request encryption keys or encrypted data from a VerusID.</p>
+
+                <label>
+                  Request ID <span class="tag optional">optional</span>
+                  <div class="input-with-action">
+                    <input id="app-encryption-request-id" name="requestId" type="text" placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+                    <button id="app-encryption-request-id-generate" type="button">Generate</button>
+                  </div>
+                  <span class="help">Unique i-address for tracking this request.</span>
+                </label>
+
+                <label>
+                  Redirects JSON <span class="tag optional">optional</span>
+                  <textarea id="app-encryption-redirects" name="redirects" rows="4">[]</textarea>
+                  <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+                </label>
+              </section>
+
+              <div class="actions">
+                <button id="app-encryption-submit-button" type="submit">Generate QR</button>
+                <span id="app-encryption-status" class="status" aria-live="polite"></span>
+              </div>
+              <div id="app-encryption-error" class="error" hidden></div>
+            </form>
+
+            <section id="app-encryption-result" class="card" hidden>
+              <h2>Result</h2>
+              <div class="result-grid">
+                <div class="qr-wrapper">
+                  <img id="app-encryption-qr-image" alt="QR Code" />
+                </div>
+                <div class="result-details">
+                  <label>
+                    Deeplink URI
+                    <textarea id="app-encryption-deeplink" rows="6" readonly></textarea>
+                  </label>
+                  <button id="app-encryption-copy-button" type="button">Copy deeplink</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="split-reference">
+            <div class="ref-card">
+              <h3>App Encryption Request</h3>
+              <p class="ref-desc">Requests encryption-related data from a VerusID for app-level encryption.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===================== DATA PACKET TAB ===================== -->
+      <section class="tab-panel" data-tab-panel="data-packet" hidden>
+        <div class="split-layout">
+          <div class="split-inputs">
+            <form id="data-packet-form">
+              <section class="card">
+                <h2>Data Packet Request</h2>
+                <p class="hint">Request a signed data packet from a VerusID.</p>
+
+                <label>
+                  Request ID <span class="tag optional">optional</span>
+                  <div class="input-with-action">
+                    <input id="data-packet-request-id" name="requestId" type="text" placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+                    <button id="data-packet-request-id-generate" type="button">Generate</button>
+                  </div>
+                  <span class="help">Unique i-address for tracking this request.</span>
+                </label>
+
+                <label>
+                  Redirects JSON <span class="tag optional">optional</span>
+                  <textarea id="data-packet-redirects" name="redirects" rows="4">[]</textarea>
+                  <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+                </label>
+              </section>
+
+              <div class="actions">
+                <button id="data-packet-submit-button" type="submit">Generate QR</button>
+                <span id="data-packet-status" class="status" aria-live="polite"></span>
+              </div>
+              <div id="data-packet-error" class="error" hidden></div>
+            </form>
+
+            <section id="data-packet-result" class="card" hidden>
+              <h2>Result</h2>
+              <div class="result-grid">
+                <div class="qr-wrapper">
+                  <img id="data-packet-qr-image" alt="QR Code" />
+                </div>
+                <div class="result-details">
+                  <label>
+                    Deeplink URI
+                    <textarea id="data-packet-deeplink" rows="6" readonly></textarea>
+                  </label>
+                  <button id="data-packet-copy-button" type="button">Copy deeplink</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="split-reference">
+            <div class="ref-card">
+              <h3>Data Packet Request</h3>
+              <p class="ref-desc">Requests a signed data packet containing arbitrary data from a VerusID.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===================== USER DATA TAB ===================== -->
+      <section class="tab-panel" data-tab-panel="user-data" hidden>
+        <div class="split-layout">
+          <div class="split-inputs">
+            <form id="user-data-form">
+              <section class="card">
+                <h2>User Data Request</h2>
+                <p class="hint">Request user data from a VerusID.</p>
+
+                <label>
+                  Request ID <span class="tag optional">optional</span>
+                  <div class="input-with-action">
+                    <input id="user-data-request-id" name="requestId" type="text" placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+                    <button id="user-data-request-id-generate" type="button">Generate</button>
+                  </div>
+                  <span class="help">Unique i-address for tracking this request.</span>
+                </label>
+
+                <label>
+                  Redirects JSON <span class="tag optional">optional</span>
+                  <textarea id="user-data-redirects" name="redirects" rows="4">[]</textarea>
+                  <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+                </label>
+              </section>
+
+              <div class="actions">
+                <button id="user-data-submit-button" type="submit">Generate QR</button>
+                <span id="user-data-status" class="status" aria-live="polite"></span>
+              </div>
+              <div id="user-data-error" class="error" hidden></div>
+            </form>
+
+            <section id="user-data-result" class="card" hidden>
+              <h2>Result</h2>
+              <div class="result-grid">
+                <div class="qr-wrapper">
+                  <img id="user-data-qr-image" alt="QR Code" />
+                </div>
+                <div class="result-details">
+                  <label>
+                    Deeplink URI
+                    <textarea id="user-data-deeplink" rows="6" readonly></textarea>
+                  </label>
+                  <button id="user-data-copy-button" type="button">Copy deeplink</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="split-reference">
+            <div class="ref-card">
+              <h3>User Data Request</h3>
+              <p class="ref-desc">Requests user-specific data stored on or associated with a VerusID.</p>
             </div>
           </aside>
         </div>

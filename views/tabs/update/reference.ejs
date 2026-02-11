@@ -1,0 +1,93 @@
+<aside class="split-reference">
+  <div class="ref-card">
+    <h3>Request ID</h3>
+    <p class="ref-desc">Optional unique i-address to identify this specific request.</p>
+    <div class="ref-snippet">
+      <code>iJitWFN8PY37GrBVtF38HyftG8WohWipbL</code>
+      <button class="copy-btn" type="button" data-copy="iJitWFN8PY37GrBVtF38HyftG8WohWipbL" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Identity Changes JSON</h3>
+    <p class="ref-desc">A JSON object with the identity fields you want to update. At minimum, include "name".</p>
+    <div class="ref-snippet">
+<pre><code>{
+"name": "player7"
+}</code></pre>
+      <button class="copy-btn" type="button" data-copy='{"name":"player7"}' title="Copy">Copy</button>
+    </div>
+    <p class="ref-desc" style="margin-top:8px;">Full example with contentmultimap:</p>
+    <div class="ref-snippet">
+<pre><code>{
+"name": "player7",
+"contentmultimap": {
+  "iP2cgAhoWvJr28BhJiTQPD7KBqAXbJNYeW": {
+    "data": {
+      "createmmr": true,
+      "mmrdata": [
+        {
+          "message": "{\"rail_transport\": 43326.71}"
+        }
+      ],
+      "mmrhashtype": "sha256",
+      "hashtype": "sha256"
+    }
+  }
+}
+}</code></pre>
+      <button class="copy-btn" type="button" data-copy='{"name":"player7","contentmultimap":{"iP2cgAhoWvJr28BhJiTQPD7KBqAXbJNYeW":{"data":{"createmmr":true,"mmrdata":[{"message":"{\"rail_transport\": 43326.71}"}],"mmrhashtype":"sha256","hashtype":"sha256"}}}}' title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Content Multi-Map JSON</h3>
+    <p class="ref-desc">Keyed by VDXF key i-address. Supports MMR data, hex strings, and nested objects.</p>
+    <div class="ref-snippet">
+<pre><code>{
+"iP2cgAhoWvJr28BhJiTQPD7KBqAXbJNYeW": {
+  "data": {
+    "createmmr": true,
+    "mmrdata": [
+      { "message": "{\"key\": \"value\"}" }
+    ],
+    "mmrhashtype": "sha256",
+    "hashtype": "sha256"
+  }
+}
+}</code></pre>
+      <button class="copy-btn" type="button" data-copy='{"iP2cgAhoWvJr28BhJiTQPD7KBqAXbJNYeW":{"data":{"createmmr":true,"mmrdata":[{"message":"{\"key\": \"value\"}"}],"mmrhashtype":"sha256","hashtype":"sha256"}}}' title="Copy">Copy</button>
+    </div>
+    <p class="ref-desc" style="margin-top:8px;">Hex string value:</p>
+    <div class="ref-snippet">
+<pre><code>{
+"iB9w3n2QiKXKhs8xHny5PLjNGBtdJqKTTx":
+  "6868686868686868686868686868686868686868"
+}</code></pre>
+      <button class="copy-btn" type="button" data-copy='{"iB9w3n2QiKXKhs8xHny5PLjNGBtdJqKTTx":"6868686868686868686868686868686868686868"}' title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Redirects JSON</h3>
+    <p class="ref-desc">Array of redirect objects. Type <strong>"1"</strong> = user redirect (URL param), <strong>"2"</strong> = POST callback.</p>
+    <div class="ref-snippet">
+<pre><code>[
+{ "type": "1", "uri": "https://www.verus.io" },
+{ "type": "2", "uri": "https://api.example.com/callback" }
+]</code></pre>
+      <button class="copy-btn" type="button" data-copy='[{"type":"1","uri":"https://www.verus.io"},{"type":"2","uri":"https://api.example.com/callback"}]' title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Authority Fields</h3>
+    <p class="ref-desc">Primary addresses must start with <strong>"R"</strong>. Revocation and recovery authorities are i-addresses.</p>
+    <div class="ref-snippet">
+      <code>Primary: ["RAddress1", "RAddress2"]</code>
+    </div>
+    <div class="ref-snippet" style="margin-top:6px;">
+      <code>Revocation / Recovery: iJitWFN8PY37...bL</code>
+    </div>
+  </div>
+</aside>

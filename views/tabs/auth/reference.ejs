@@ -1,0 +1,46 @@
+<aside class="split-reference">
+  <div class="ref-card">
+    <h3>Request ID</h3>
+    <p class="ref-desc">Required i-address to uniquely identify this authentication request.</p>
+    <div class="ref-snippet">
+      <code>iJitWFN8PY37GrBVtF38HyftG8WohWipbL</code>
+      <button class="copy-btn" type="button" data-copy="iJitWFN8PY37GrBVtF38HyftG8WohWipbL" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Expiry Time</h3>
+    <p class="ref-desc">Optional positive unix timestamp (seconds). Leave empty for no expiry.</p>
+    <div class="ref-snippet">
+      <code>1700000000</code>
+      <button class="copy-btn" type="button" data-copy="1700000000" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Recipient Constraint</h3>
+    <p class="ref-desc">Restricts which identity can respond. Choose a type and provide the corresponding i-address.</p>
+    <div class="ref-snippet">
+<pre><code>Type 1 &mdash; Required ID
+Type 2 &mdash; Required System
+Type 3 &mdash; Required Parent</code></pre>
+    </div>
+    <p class="ref-desc" style="margin-top:8px;">Example identity:</p>
+    <div class="ref-snippet">
+      <code>iJitWFN8PY37GrBVtF38HyftG8WohWipbL</code>
+      <button class="copy-btn" type="button" data-copy="iJitWFN8PY37GrBVtF38HyftG8WohWipbL" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Redirects JSON</h3>
+    <p class="ref-desc">Array of redirect objects. Type <strong>"1"</strong> = user redirect, <strong>"2"</strong> = POST callback.</p>
+    <div class="ref-snippet">
+<pre><code>[
+{ "type": "1", "uri": "https://www.verus.io" },
+{ "type": "2", "uri": "https://api.example.com/callback" }
+]</code></pre>
+      <button class="copy-btn" type="button" data-copy='[{"type":"1","uri":"https://www.verus.io"},{"type":"2","uri":"https://api.example.com/callback"}]' title="Copy">Copy</button>
+    </div>
+  </div>
+</aside>

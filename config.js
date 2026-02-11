@@ -2,8 +2,8 @@
 const conf = {
   // RPC Info
   RPC_PORT: 18843,
-  RPC_USER: "c5dUxeBsBvaHsm8Me4sziDgGVqMx-bK8_TZDy4SWiiY",
-  RPC_PASSWORD: "51zaj-USx5fRMyB6IJEG5ugE0zUdCt7j7S5B8okw4qw",
+  RPC_USER: "APFPOIUpX_Q02VtinRIk8w_t3hGm5y0k-Wcp8ACLSGc",
+  RPC_PASSWORD: "eDnlHNj-zwtve3I8QF5Fo4SOR1vQAECevE1JNtmnx9o",
 
   // What you would normally pass to 'jsonidentity' when calling updateidentity
   JSON_IDENTITY_CHANGES: {

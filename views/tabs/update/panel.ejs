@@ -1,0 +1,131 @@
+<section class="tab-panel" data-tab-panel="update">
+  <div class="split-layout">
+    <div class="split-inputs">
+      <form id="update-form">
+        <section class="card">
+          <h2>Update Identity Request</h2>
+
+          <label>
+            Request ID <span class="tag optional">optional</span>
+            <div class="input-with-action">
+              <input id="update-request-id" name="requestId" type="text" placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+              <button id="update-request-id-generate" type="button">Generate</button>
+            </div>
+            <span class="help">Unique i-address for tracking this request.</span>
+          </label>
+
+          <label>
+            Identity Changes JSON
+            <textarea id="update-identity-changes" name="identityChanges" rows="8">{
+"name": "player7"
+}</textarea>
+            <span class="help">JSON object describing the identity fields to update.</span>
+          </label>
+
+          <label>
+            Redirects JSON <span class="tag optional">optional</span>
+            <textarea id="update-redirects" name="redirects" rows="4">[]</textarea>
+            <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+          </label>
+        </section>
+
+        <section class="card">
+          <h2>Content Multi-Map</h2>
+          <p class="hint small">
+            Optional override applied to contentmultimap in Identity Changes JSON.
+          </p>
+          <div class="stack">
+            <label class="checkbox">
+              <input id="update-enable-content-multimap" type="checkbox" checked />
+              Set contentmultimap
+            </label>
+            <label>
+              Content multimap JSON
+              <textarea id="update-content-multimap" rows="10" disabled>{
+"iP2cgAhoWvJr28BhJiTQPD7KBqAXbJNYeW": {
+  "data": {
+    "createmmr": true,
+    "mmrdata": [
+      {
+        "message": "{\"rail_transport\": 43326.71}"
+      }
+    ],
+    "mmrhashtype": "sha256",
+    "hashtype": "sha256"
+  }
+}
+}</textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Authority Updates</h2>
+          <p class="hint small">
+            Optional overrides applied on top of Identity Changes JSON.
+          </p>
+          <div class="stack">
+            <label class="checkbox">
+              <input id="update-enable-primary-addresses" type="checkbox" />
+              Set primary address(es)
+            </label>
+            <label>
+              Primary addresses
+              <textarea
+                id="update-primary-addresses"
+                rows="3"
+                placeholder='["RAddr1","RAddr2"] or comma-separated'
+                disabled
+              ></textarea>
+              <span class="help">Accepts JSON array or comma-separated list. Must start with "R".</span>
+            </label>
+          </div>
+          <div class="stack">
+            <label class="checkbox">
+              <input id="update-enable-revocation-authority" type="checkbox" />
+              Set revocation authority
+            </label>
+            <label>
+              Revocation authority (i-address)
+              <input id="update-revocation-authority" type="text" disabled placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+            </label>
+          </div>
+          <div class="stack">
+            <label class="checkbox">
+              <input id="update-enable-recovery-authority" type="checkbox" />
+              Set recovery authority
+            </label>
+            <label>
+              Recovery authority (i-address)
+              <input id="update-recovery-authority" type="text" disabled placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+            </label>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button id="update-submit-button" type="submit">Generate QR</button>
+          <span id="update-status" class="status" aria-live="polite"></span>
+        </div>
+        <div id="update-error" class="error" hidden></div>
+      </form>
+
+      <section id="update-result" class="card" hidden>
+        <h2>Result</h2>
+        <div class="result-grid">
+          <div class="qr-wrapper">
+            <img id="update-qr-image" alt="QR Code" />
+          </div>
+          <div class="result-details">
+            <label>
+              Deeplink URI
+              <textarea id="update-deeplink" rows="6" readonly></textarea>
+            </label>
+            <button id="update-copy-button" type="button">Copy deeplink</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <%- include('./reference') %>
+  </div>
+</section>
