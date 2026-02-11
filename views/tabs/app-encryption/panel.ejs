@@ -1,0 +1,75 @@
+<section class="tab-panel" data-tab-panel="app-encryption" hidden>
+  <div class="split-layout">
+    <div class="split-inputs">
+      <form id="app-encryption-form">
+        <section class="card">
+          <h2>App Encryption Request</h2>
+          <p class="hint">Request encryption keys or encrypted data from a VerusID for app-level encryption.</p>
+
+          <label>
+            Encrypt To Z-Address <span class="tag optional">optional</span>
+            <input id="app-encryption-zaddress" name="encryptToZAddress" type="text" placeholder="e.g. zs1..." />
+            <span class="help">The z-address which the mobile app will encrypt its response to.</span>
+          </label>
+
+          <label>
+            Derivation Number <span class="tag optional">optional</span>
+            <input id="app-encryption-derivation-number" name="derivationNumber" type="number" value="0" min="0" step="1" />
+            <span class="help">A number to create new encryption keys from to enhance security. Default: 0</span>
+          </label>
+
+          <label>
+            Derivation ID <span class="tag optional">optional</span>
+            <input id="app-encryption-derivation-id" name="derivationID" type="text" placeholder="e.g. jondoe@" />
+            <span class="help">If provided (e.g. jondoe@), the z-address from this ID will be used to create the encryption address. If not present, the z-address from the signing ID will be used.</span>
+          </label>
+
+          <label>
+            Request ID <span class="tag optional">optional</span>
+            <div class="input-with-action">
+              <input id="app-encryption-request-id" name="requestId" type="text" placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+              <button id="app-encryption-request-id-generate" type="button">Generate</button>
+            </div>
+            <span class="help">Unique i-address identifier for this request. Click Generate to create a random one.</span>
+          </label>
+
+          <label class="checkbox-label">
+            <input id="app-encryption-return-esk" name="returnEsk" type="checkbox" />
+            Return ESK (Extended Spending Key)
+            <span class="help">When checked, requests that the wallet return an ESK as well as the normal response.</span>
+          </label>
+
+          <label>
+            Redirects JSON <span class="tag required">required</span>
+            <textarea id="app-encryption-redirects" name="redirects" rows="4" required>[{"type":"1","uri":"https://www.yourreturnwebsite.com"},{"type":"2","uri":"https://api.yourpostserverendpoint.com"}]</textarea>
+            <span class="help">Array of redirect objects. Type "1" = user redirect, "2" = POST callback.</span>
+          </label>
+        </section>
+
+        <div class="actions">
+          <button id="app-encryption-submit-button" type="submit">Generate QR</button>
+          <span id="app-encryption-status" class="status" aria-live="polite"></span>
+        </div>
+        <div id="app-encryption-error" class="error" hidden></div>
+      </form>
+
+      <section id="app-encryption-result" class="card" hidden>
+        <h2>Result</h2>
+        <div class="result-grid">
+          <div class="qr-wrapper">
+            <img id="app-encryption-qr-image" alt="QR Code" />
+          </div>
+          <div class="result-details">
+            <label>
+              Deeplink URI
+              <textarea id="app-encryption-deeplink" rows="6" readonly></textarea>
+            </label>
+            <button id="app-encryption-copy-button" type="button">Copy deeplink</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <%- include('./reference') %>
+  </div>
+</section>

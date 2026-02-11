@@ -1,0 +1,73 @@
+<section class="tab-panel" data-tab-panel="auth" hidden>
+  <div class="split-layout">
+    <div class="split-inputs">
+      <form id="auth-form">
+        <section class="card">
+          <h2>Authentication Request</h2>
+
+          <label>
+            Request ID <span class="tag required">required</span>
+            <div class="input-with-action">
+              <input id="auth-request-id" name="requestId" type="text" required placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+              <button id="auth-request-id-generate" type="button">Generate</button>
+            </div>
+            <span class="help">Required i-address identifying this auth request.</span>
+          </label>
+
+          <label>
+            Expiry time <span class="tag optional">optional</span>
+            <input id="auth-expiry-time" name="expiryTime" type="text" placeholder="e.g. 1700000000" />
+            <span class="help">Positive unix timestamp (seconds) when the request expires.</span>
+          </label>
+
+          <div class="grid">
+            <label>
+              Recipient constraint type
+              <select id="auth-recipient-constraint-type">
+                <option value="">None</option>
+                <option value="1">1 &mdash; Required ID</option>
+                <option value="2">2 &mdash; Required System</option>
+                <option value="3">3 &mdash; Required Parent</option>
+              </select>
+              <span class="help">Restricts who can respond to this request.</span>
+            </label>
+            <label>
+              Recipient constraint identity (i-address)
+              <input id="auth-recipient-constraint-identity" type="text" disabled placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+            </label>
+          </div>
+
+          <label>
+            Redirects JSON <span class="tag optional">optional</span>
+            <textarea id="auth-redirects" name="redirects" rows="4">[]</textarea>
+            <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+          </label>
+        </section>
+
+        <div class="actions">
+          <button id="auth-submit-button" type="submit">Generate QR</button>
+          <span id="auth-status" class="status" aria-live="polite"></span>
+        </div>
+        <div id="auth-error" class="error" hidden></div>
+      </form>
+
+      <section id="auth-result" class="card" hidden>
+        <h2>Result</h2>
+        <div class="result-grid">
+          <div class="qr-wrapper">
+            <img id="auth-qr-image" alt="QR Code" />
+          </div>
+          <div class="result-details">
+            <label>
+              Deeplink URI
+              <textarea id="auth-deeplink" rows="6" readonly></textarea>
+            </label>
+            <button id="auth-copy-button" type="button">Copy deeplink</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <%- include('./reference') %>
+  </div>
+</section>

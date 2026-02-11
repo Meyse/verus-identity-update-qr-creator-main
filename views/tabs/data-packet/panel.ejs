@@ -1,0 +1,101 @@
+<section class="tab-panel" data-tab-panel="data-packet" hidden>
+  <div class="split-layout">
+    <div class="split-inputs">
+      <form id="data-packet-form">
+        <section class="card">
+          <h2>Data Packet Request</h2>
+          <p class="hint">Request a signed data packet from a VerusID. Configure flags to specify what data types to include.</p>
+
+          <fieldset class="flags-group">
+            <legend>Flags</legend>
+            <label class="checkbox-label">
+              <input id="data-packet-flag-has-request-id" name="flagHasRequestId" type="checkbox" />
+              Has Request ID
+              <span class="help">Include a unique request identifier.</span>
+            </label>
+            <label class="checkbox-label">
+              <input id="data-packet-flag-has-statements" name="flagHasStatements" type="checkbox" />
+              Has Statements
+              <span class="help">Include text statements to be signed.</span>
+            </label>
+            <label class="checkbox-label">
+              <input id="data-packet-flag-has-signature" name="flagHasSignature" type="checkbox" />
+              Has Signature
+              <span class="help">Request includes a signature reference.</span>
+            </label>
+            <label class="checkbox-label">
+              <input id="data-packet-flag-for-users-signature" name="flagForUsersSignature" type="checkbox" />
+              For User's Signature
+              <span class="help">Request the user's signature on the data.</span>
+            </label>
+            <label class="checkbox-label">
+              <input id="data-packet-flag-for-transmittal" name="flagForTransmittalToUser" type="checkbox" />
+              For Transmittal to User
+              <span class="help">Data intended for transmission to the user.</span>
+            </label>
+            <label class="checkbox-label">
+              <input id="data-packet-flag-has-url" name="flagHasUrlForDownload" type="checkbox" />
+              Has URL for Download
+              <span class="help">Include a URL reference for data download.</span>
+            </label>
+          </fieldset>
+
+          <label>
+            Signable Objects JSON <span class="tag optional">optional</span>
+            <textarea id="data-packet-signable-objects" name="signableObjects" rows="6">[{"version": 1, "label": "example", "objectdata": "0011223344", "flags": 1}]</textarea>
+            <span class="help">Array of DataDescriptor objects. Each needs: version, label, objectdata (hex), flags.</span>
+          </label>
+
+          <div id="data-packet-statements-group" hidden>
+            <label>
+              Statements JSON <span class="tag required">required when flag set</span>
+              <textarea id="data-packet-statements" name="statements" rows="4">["Statement 1", "Statement 2"]</textarea>
+              <span class="help">Array of text statements to be signed by the VerusID.</span>
+            </label>
+          </div>
+
+          <div id="data-packet-request-id-group" hidden>
+            <label>
+              Request ID <span class="tag required">required when flag set</span>
+              <div class="input-with-action">
+                <input id="data-packet-request-id" name="requestId" type="text" placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+                <button id="data-packet-request-id-generate" type="button">Generate</button>
+              </div>
+              <span class="help">Unique i-address identifier for this request.</span>
+            </label>
+          </div>
+
+          <label>
+            Redirects JSON <span class="tag required">required</span>
+            <textarea id="data-packet-redirects" name="redirects" rows="4" required>[{"type":"1","uri":"https://www.yourreturnwebsite.com"},{"type":"2","uri":"https://api.yourpostserverendpoint.com"}]</textarea>
+            <span class="help">Array of redirect objects. Type "1" = user redirect, "2" = POST callback.</span>
+          </label>
+        </section>
+
+        <div class="actions">
+          <button id="data-packet-submit-button" type="submit">Generate QR</button>
+          <span id="data-packet-status" class="status" aria-live="polite"></span>
+        </div>
+        <div id="data-packet-error" class="error" hidden></div>
+      </form>
+
+      <section id="data-packet-result" class="card" hidden>
+        <h2>Result</h2>
+        <div class="result-grid">
+          <div class="qr-wrapper">
+            <img id="data-packet-qr-image" alt="QR Code" />
+          </div>
+          <div class="result-details">
+            <label>
+              Deeplink URI
+              <textarea id="data-packet-deeplink" rows="6" readonly></textarea>
+            </label>
+            <button id="data-packet-copy-button" type="button">Copy deeplink</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <%- include('./reference') %>
+  </div>
+</section>

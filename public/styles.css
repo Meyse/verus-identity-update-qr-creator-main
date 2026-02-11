@@ -400,6 +400,52 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
+.checkbox-label {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.checkbox-label .help {
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* ── Flags Group ───────────────────────────────────────────────────── */
+
+.flags-group {
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--clr-surface-alt);
+}
+
+.flags-group legend {
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0 8px;
+  color: var(--clr-text);
+}
+
+.flags-group .checkbox-label {
+  margin-bottom: 8px;
+}
+
+.flags-group .checkbox-label:last-child {
+  margin-bottom: 0;
+}
+
 /* ── Actions ───────────────────────────────────────────────────────── */
 
 .actions {

@@ -1,0 +1,164 @@
+<section class="tab-panel" data-tab-panel="invoice" hidden>
+  <div class="split-layout">
+    <div class="split-inputs">
+      <form id="invoice-form">
+        <section class="card">
+          <h2>VerusPay Invoice Request</h2>
+
+          <label class="checkbox">
+            <input id="invoice-signed" type="checkbox" checked />
+            Sign this request
+            <span class="help" style="margin-left:8px;">When unchecked, the invoice is unsigned (no RPC call needed).</span>
+          </label>
+
+          <label>
+            Requested Currency ID <span class="tag required">required</span>
+            <input id="invoice-currency-search" type="search" placeholder="Search currencies by name or i-address" />
+            <select id="invoice-currency-id-select">
+              <option value="">Loading currencies...</option>
+            </select>
+            <span class="help">Search and select a currency. The selected i-address is used for the invoice.</span>
+          </label>
+        </section>
+
+        <section class="card">
+          <h2>Amount</h2>
+          <div class="stack">
+            <label class="checkbox">
+              <input id="invoice-accepts-any-amount" type="checkbox" />
+              Accepts any amount
+            </label>
+            <label>
+              Amount
+              <input id="invoice-amount" type="text" placeholder="e.g. 0.5 or 100" />
+              <span class="help">Amount in currency units (e.g. 0.5 = half a coin). Disabled when "accepts any amount" is checked.</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Destination</h2>
+          <div class="stack">
+            <label class="checkbox">
+              <input id="invoice-accepts-any-destination" type="checkbox" />
+              Accepts any destination
+            </label>
+            <div class="grid">
+              <label>
+                Destination type
+                <select id="invoice-destination-type">
+                  <option value="pkh">PKH (R-address)</option>
+                  <option value="id">ID (i-address)</option>
+                </select>
+              </label>
+              <label>
+                Destination address
+                <div class="input-with-action">
+                  <input id="invoice-destination-address" type="text" placeholder="e.g. R9J8E2no2HVjQmzX6Ntes2ShSGcn7WiRcx" />
+                  <button id="invoice-destination-same-as-signer" type="button">Same as signer</button>
+                </div>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Flags</h2>
+          <p class="hint small">
+            Toggle VerusPay invoice flags. Fields appear when their flag is enabled.
+          </p>
+
+          <div class="stack">
+            <label class="checkbox">
+              <input id="invoice-is-testnet" type="checkbox" checked />
+              Testnet
+            </label>
+
+            <label class="checkbox">
+              <input id="invoice-accepts-conversion" type="checkbox" />
+              Accepts conversion
+            </label>
+            <label id="invoice-slippage-group" hidden>
+              Max estimated slippage (%)
+              <input id="invoice-max-slippage" type="text" placeholder="e.g. 5" />
+              <div class="quick-buttons" role="group" aria-label="Quick slippage values">
+                <button type="button" data-slippage-value="1">1%</button>
+                <button type="button" data-slippage-value="2">2%</button>
+                <button type="button" data-slippage-value="5">5%</button>
+                <button type="button" data-slippage-value="10">10%</button>
+              </div>
+              <span class="help">Maximum slippage as a percentage (e.g. 5 = 5%).</span>
+            </label>
+
+            <label class="checkbox">
+              <input id="invoice-expires" type="checkbox" />
+              Expires
+            </label>
+            <label id="invoice-expiry-group" hidden>
+              Expiry height (block number)
+              <input id="invoice-expiry-height" type="text" placeholder="e.g. 2000000" />
+              <span class="help">Block height after which this invoice is no longer valid.</span>
+            </label>
+
+            <label class="checkbox">
+              <input id="invoice-accepts-non-verus" type="checkbox" />
+              Accepts non-Verus systems
+            </label>
+            <label id="invoice-accepted-systems-group" hidden>
+              Accepted system i-addresses (comma-separated)
+              <input id="invoice-accepted-systems" type="text" placeholder="e.g. iNC9NG5Jqk2tqVtqfjfiSpaqxrXaFU6RDu, iBDkVJqik6BrtcDBQfFygffiYzTMy6EuhU" />
+              <span class="help">Comma-separated list of system i-addresses.</span>
+            </label>
+
+            <label class="checkbox">
+              <input id="invoice-is-preconvert" type="checkbox" />
+              Preconvert
+            </label>
+
+            <label class="checkbox">
+              <input id="invoice-is-tagged" type="checkbox" />
+              Tagged
+            </label>
+            <label id="invoice-tag-group" hidden>
+              Tag address (x-address)
+              <input id="invoice-tag-address" type="text" placeholder="e.g. xA91QPpBrHZto92NCU5KEjCqRveS4dAPrf" />
+              <span class="help">An x-address tag for the invoice.</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <label>
+            Redirects JSON <span class="tag optional">optional</span>
+            <textarea id="invoice-redirects" name="redirects" rows="4">[]</textarea>
+            <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+          </label>
+        </section>
+
+        <div class="actions">
+          <button id="invoice-submit-button" type="submit">Generate QR</button>
+          <span id="invoice-status" class="status" aria-live="polite"></span>
+        </div>
+        <div id="invoice-error" class="error" hidden></div>
+      </form>
+
+      <section id="invoice-result" class="card" hidden>
+        <h2>Result</h2>
+        <div class="result-grid">
+          <div class="qr-wrapper">
+            <img id="invoice-qr-image" alt="QR Code" />
+          </div>
+          <div class="result-details">
+            <label>
+              Deeplink URI
+              <textarea id="invoice-deeplink" rows="6" readonly></textarea>
+            </label>
+            <button id="invoice-copy-button" type="button">Copy deeplink</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <%- include('./reference') %>
+  </div>
+</section>

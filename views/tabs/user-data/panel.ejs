@@ -1,0 +1,51 @@
+<section class="tab-panel" data-tab-panel="user-data" hidden>
+  <div class="split-layout">
+    <div class="split-inputs">
+      <form id="user-data-form">
+        <section class="card">
+          <h2>User Data Request</h2>
+          <p class="hint">Request user data from a VerusID.</p>
+
+          <label>
+            Request ID <span class="tag optional">optional</span>
+            <div class="input-with-action">
+              <input id="user-data-request-id" name="requestId" type="text" placeholder="e.g. iJitWFN8PY37GrBVtF38HyftG8WohWipbL" />
+              <button id="user-data-request-id-generate" type="button">Generate</button>
+            </div>
+            <span class="help">Unique i-address for tracking this request.</span>
+          </label>
+
+          <label>
+            Redirects JSON <span class="tag optional">optional</span>
+            <textarea id="user-data-redirects" name="redirects" rows="4">[]</textarea>
+            <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+          </label>
+        </section>
+
+        <div class="actions">
+          <button id="user-data-submit-button" type="submit">Generate QR</button>
+          <span id="user-data-status" class="status" aria-live="polite"></span>
+        </div>
+        <div id="user-data-error" class="error" hidden></div>
+      </form>
+
+      <section id="user-data-result" class="card" hidden>
+        <h2>Result</h2>
+        <div class="result-grid">
+          <div class="qr-wrapper">
+            <img id="user-data-qr-image" alt="QR Code" />
+          </div>
+          <div class="result-details">
+            <label>
+              Deeplink URI
+              <textarea id="user-data-deeplink" rows="6" readonly></textarea>
+            </label>
+            <button id="user-data-copy-button" type="button">Copy deeplink</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <%- include('./reference') %>
+  </div>
+</section>

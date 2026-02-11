@@ -1,0 +1,56 @@
+<aside class="split-reference">
+  <div class="ref-card">
+    <h3>Encrypt To Z-Address</h3>
+    <p class="ref-desc">The Sapling z-address (starts with zs1) that the mobile wallet will encrypt its response to.</p>
+    <div class="ref-snippet">
+      <code>zs1...</code>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Derivation Number</h3>
+    <p class="ref-desc">An integer (default 0) used to derive unique encryption keys. Increment for key rotation.</p>
+    <div class="ref-snippet">
+      <code>0</code>
+      <button class="copy-btn" type="button" data-copy="0" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Derivation ID</h3>
+    <p class="ref-desc">Optional VerusID whose z-address will be used to create the encryption address. If omitted, the signing ID's z-address is used.</p>
+    <div class="ref-snippet">
+      <code>jondoe@</code>
+      <button class="copy-btn" type="button" data-copy="jondoe@" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Request ID</h3>
+    <p class="ref-desc">A unique i-address that identifies this specific request. Use the Generate button to create a random one.</p>
+    <div class="ref-snippet">
+      <code>iJitWFN8PY37GrBVtF38HyftG8WohWipbL</code>
+      <button class="copy-btn" type="button" data-copy="iJitWFN8PY37GrBVtF38HyftG8WohWipbL" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Return ESK</h3>
+    <p class="ref-desc">When enabled, requests that the wallet also return an Extended Spending Key (ESK) along with the normal encryption response.</p>
+  </div>
+
+  <div class="ref-card">
+    <h3>Redirects JSON</h3>
+    <p class="ref-desc">Array of redirect objects. Type <strong>"1"</strong> = user redirect, <strong>"2"</strong> = POST callback.</p>
+    <div class="ref-snippet">
+<pre><code>[{
+  "type": "1",
+  "uri": "https://www.yourreturnwebsite.com"
+}, {
+  "type": "2",
+  "uri": "https://api.yourpostserverendpoint.com"
+}]</code></pre>
+      <button class="copy-btn" type="button" data-copy='[{"type":"1","uri":"https://www.yourreturnwebsite.com"},{"type":"2","uri":"https://api.yourpostserverendpoint.com"}]' title="Copy">Copy</button>
+    </div>
+  </div>
+</aside>

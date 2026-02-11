@@ -928,12 +928,275 @@
     });
   };
 
+  // ── App Encryption Form ─────────────────────────────────────────────
+
+  const setupAppEncryptionForm = () => {
+    const form = document.getElementById("app-encryption-form");
+    const statusEl = document.getElementById("app-encryption-status");
+    const errorEl = document.getElementById("app-encryption-error");
+    const resultEl = document.getElementById("app-encryption-result");
+    const qrImage = document.getElementById("app-encryption-qr-image");
+    const deeplinkEl = document.getElementById("app-encryption-deeplink");
+    const copyButton = document.getElementById("app-encryption-copy-button");
+    const submitButton = document.getElementById("app-encryption-submit-button");
+    const requestIdInput = document.getElementById("app-encryption-request-id");
+    const requestIdGenerateButton = document.getElementById("app-encryption-request-id-generate");
+
+    if (
+      !form ||
+      !statusEl ||
+      !errorEl ||
+      !resultEl ||
+      !qrImage ||
+      !deeplinkEl ||
+      !copyButton ||
+      !submitButton
+    ) {
+      return;
+    }
+
+    setupRequestIdGenerator(requestIdInput, requestIdGenerateButton, statusEl, errorEl);
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError(errorEl);
+      resultEl.hidden = true;
+      setStatus(statusEl, "Generating QR code...");
+      submitButton.disabled = true;
+
+      try {
+        const signingId = getGlobalSigningId();
+        if (!signingId) {
+          throw new Error("Signing ID is required (set in the global header above).");
+        }
+
+        const encryptToZAddress = getInputValue("app-encryption-zaddress").trim() || undefined;
+        const derivationNumberRaw = getInputValue("app-encryption-derivation-number").trim();
+        const derivationID = getInputValue("app-encryption-derivation-id").trim() || undefined;
+        const requestId = getInputValue("app-encryption-request-id").trim() || undefined;
+        const returnEsk = isChecked("app-encryption-return-esk");
+        const redirectsText = getInputValue("app-encryption-redirects");
+
+        let derivationNumber = 0;
+        if (derivationNumberRaw) {
+          const parsed = Number(derivationNumberRaw);
+          if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
+            throw new Error("Derivation number must be a non-negative integer.");
+          }
+          derivationNumber = parsed;
+        }
+
+        if (encryptToZAddress && !encryptToZAddress.startsWith("zs1")) {
+          throw new Error("Z-address must start with 'zs1'.");
+        }
+
+        const redirects = parseJsonField(redirectsText, "Redirects JSON", true);
+        if (!Array.isArray(redirects) || redirects.length === 0) {
+          throw new Error("Redirects JSON must be a non-empty array.");
+        }
+
+        const payload = {
+          signingId,
+          encryptToZAddress,
+          derivationNumber,
+          derivationID,
+          requestId,
+          returnEsk,
+          redirects
+        };
+
+        const response = await fetch("/api/generate-app-encryption-qr", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to generate QR.");
+        }
+
+        qrImage.src = data.qrDataUrl;
+        qrImage.alt = "QR Code for app encryption request";
+        deeplinkEl.value = data.deeplink;
+        resultEl.hidden = false;
+        setStatus(statusEl, "QR generated.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unexpected error.";
+        showError(errorEl, message);
+        setStatus(statusEl, "");
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    copyButton.addEventListener("click", async () => {
+      if (!deeplinkEl.value) return;
+      try {
+        await navigator.clipboard.writeText(deeplinkEl.value);
+        setStatus(statusEl, "Deeplink copied.");
+        setTimeout(() => setStatus(statusEl, ""), 2000);
+      } catch (error) {
+        setStatus(statusEl, "Copy failed. Select and copy manually.");
+      }
+    });
+  };
+
+  // ── Data Packet Form ────────────────────────────────────────────────
+
+  const setupDataPacketForm = () => {
+    const form = document.getElementById("data-packet-form");
+    const statusEl = document.getElementById("data-packet-status");
+    const errorEl = document.getElementById("data-packet-error");
+    const resultEl = document.getElementById("data-packet-result");
+    const qrImage = document.getElementById("data-packet-qr-image");
+    const deeplinkEl = document.getElementById("data-packet-deeplink");
+    const copyButton = document.getElementById("data-packet-copy-button");
+    const submitButton = document.getElementById("data-packet-submit-button");
+    const requestIdInput = document.getElementById("data-packet-request-id");
+    const requestIdGenerateButton = document.getElementById("data-packet-request-id-generate");
+    const flagHasRequestIdCheckbox = document.getElementById("data-packet-flag-has-request-id");
+    const flagHasStatementsCheckbox = document.getElementById("data-packet-flag-has-statements");
+    const requestIdGroup = document.getElementById("data-packet-request-id-group");
+    const statementsGroup = document.getElementById("data-packet-statements-group");
+
+    if (
+      !form ||
+      !statusEl ||
+      !errorEl ||
+      !resultEl ||
+      !qrImage ||
+      !deeplinkEl ||
+      !copyButton ||
+      !submitButton
+    ) {
+      return;
+    }
+
+    // Toggle conditional fields based on flag checkboxes
+    const toggleConditionalFields = () => {
+      if (requestIdGroup) {
+        requestIdGroup.hidden = !flagHasRequestIdCheckbox?.checked;
+      }
+      if (statementsGroup) {
+        statementsGroup.hidden = !flagHasStatementsCheckbox?.checked;
+      }
+    };
+
+    if (flagHasRequestIdCheckbox) {
+      flagHasRequestIdCheckbox.addEventListener("change", toggleConditionalFields);
+    }
+    if (flagHasStatementsCheckbox) {
+      flagHasStatementsCheckbox.addEventListener("change", toggleConditionalFields);
+    }
+    toggleConditionalFields();
+
+    setupRequestIdGenerator(requestIdInput, requestIdGenerateButton, statusEl, errorEl);
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError(errorEl);
+      resultEl.hidden = true;
+      setStatus(statusEl, "Generating QR code...");
+      submitButton.disabled = true;
+
+      try {
+        const signingId = getGlobalSigningId();
+        if (!signingId) {
+          throw new Error("Signing ID is required (set in the global header above).");
+        }
+
+        const flagHasRequestId = isChecked("data-packet-flag-has-request-id");
+        const flagHasStatements = isChecked("data-packet-flag-has-statements");
+        const flagHasSignature = isChecked("data-packet-flag-has-signature");
+        const flagForUsersSignature = isChecked("data-packet-flag-for-users-signature");
+        const flagForTransmittalToUser = isChecked("data-packet-flag-for-transmittal");
+        const flagHasUrlForDownload = isChecked("data-packet-flag-has-url");
+
+        const signableObjectsText = getInputValue("data-packet-signable-objects");
+        const statementsText = getInputValue("data-packet-statements");
+        const requestId = getInputValue("data-packet-request-id").trim() || undefined;
+        const redirectsText = getInputValue("data-packet-redirects");
+
+        const signableObjects = parseJsonField(signableObjectsText, "Signable Objects JSON", false);
+        const statements = parseJsonField(statementsText, "Statements JSON", false);
+        const redirects = parseJsonField(redirectsText, "Redirects JSON", true);
+
+        if (!Array.isArray(redirects) || redirects.length === 0) {
+          throw new Error("Redirects JSON must be a non-empty array.");
+        }
+
+        if (flagHasStatements && (!statements || !Array.isArray(statements) || statements.length === 0)) {
+          throw new Error("Statements are required when 'Has Statements' flag is checked.");
+        }
+
+        if (flagHasRequestId && !requestId) {
+          throw new Error("Request ID is required when 'Has Request ID' flag is checked.");
+        }
+
+        const payload = {
+          signingId,
+          flagHasRequestId,
+          flagHasStatements,
+          flagHasSignature,
+          flagForUsersSignature,
+          flagForTransmittalToUser,
+          flagHasUrlForDownload,
+          signableObjects,
+          statements,
+          requestId,
+          redirects
+        };
+
+        const response = await fetch("/api/generate-data-packet-qr", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to generate QR.");
+        }
+
+        qrImage.src = data.qrDataUrl;
+        qrImage.alt = "QR Code for data packet request";
+        deeplinkEl.value = data.deeplink;
+        resultEl.hidden = false;
+        setStatus(statusEl, "QR generated.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unexpected error.";
+        showError(errorEl, message);
+        setStatus(statusEl, "");
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    copyButton.addEventListener("click", async () => {
+      if (!deeplinkEl.value) return;
+      try {
+        await navigator.clipboard.writeText(deeplinkEl.value);
+        setStatus(statusEl, "Deeplink copied.");
+        setTimeout(() => setStatus(statusEl, ""), 2000);
+      } catch (error) {
+        setStatus(statusEl, "Copy failed. Select and copy manually.");
+      }
+    });
+  };
+
   // ── Init ─────────────────────────────────────────────────────────────
 
   setupTabs();
   setupUpdateForm();
   setupAuthForm();
   setupInvoiceForm();
+  setupAppEncryptionForm();
+  setupDataPacketForm();
   setupCopyButtons();
   wireGlobalSigningIdDropdown();
   loadIdentities();

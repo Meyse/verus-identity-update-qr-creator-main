@@ -1,0 +1,62 @@
+<aside class="split-reference">
+  <div class="ref-card">
+    <h3>Requested Currency ID</h3>
+    <p class="ref-desc">The i-address of the currency you want to be paid in. VRSCTEST example:</p>
+    <div class="ref-snippet">
+      <code>iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq</code>
+      <button class="copy-btn" type="button" data-copy="iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Amount</h3>
+    <p class="ref-desc">Amount in normal currency units (up to 8 decimals). Examples:</p>
+    <div class="ref-snippet">
+      <code>0.5</code> = half a coin &nbsp;&nbsp; <code>100</code> = 100 coins
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Destination</h3>
+    <p class="ref-desc">Where the payment should be sent. PKH = R-address, ID = i-address.</p>
+    <div class="ref-snippet">
+      <code>R9J8E2no2HVjQmzX6Ntes2ShSGcn7WiRcx</code>
+      <button class="copy-btn" type="button" data-copy="R9J8E2no2HVjQmzX6Ntes2ShSGcn7WiRcx" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Invoice Flags</h3>
+    <p class="ref-desc">Flags control which fields are active and how the wallet interprets the invoice:</p>
+    <div class="ref-snippet">
+<pre><code>acceptsAnyAmount - payer chooses amount
+acceptsAnyDest   - payer chooses dest
+acceptsConversion- allow currency conversion
+expires          - enforce block-height expiry
+nonVerusSystems  - accept other chains
+isPreconvert     - preconvert to currency
+isTagged         - attach x-address tag
+isTestnet        - mark as testnet</code></pre>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Signed vs Unsigned</h3>
+    <p class="ref-desc">
+      When <strong>signed</strong>, the request is hashed and signed via your wallet's RPC using the global Signing ID.
+      When <strong>unsigned</strong>, no RPC is needed and no signature is attached.
+    </p>
+  </div>
+
+  <div class="ref-card">
+    <h3>Redirects JSON</h3>
+    <p class="ref-desc">Array of redirect objects. Type <strong>"1"</strong> = user redirect, <strong>"2"</strong> = POST callback.</p>
+    <div class="ref-snippet">
+<pre><code>[
+{ "type": "1", "uri": "https://www.verus.io" },
+{ "type": "2", "uri": "https://api.example.com/callback" }
+]</code></pre>
+      <button class="copy-btn" type="button" data-copy='[{"type":"1","uri":"https://www.verus.io"},{"type":"2","uri":"https://api.example.com/callback"}]' title="Copy">Copy</button>
+    </div>
+  </div>
+</aside>

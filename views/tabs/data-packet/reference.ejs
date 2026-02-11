@@ -1,0 +1,62 @@
+<aside class="split-reference">
+  <div class="ref-card">
+    <h3>Flags</h3>
+    <p class="ref-desc">Configure which data types are included in the request.</p>
+    <div class="ref-snippet">
+<pre><code>FLAG_HAS_REQUEST_ID (1)
+FLAG_HAS_STATEMENTS (2)
+FLAG_HAS_SIGNATURE (4)
+FLAG_FOR_USERS_SIGNATURE (8)
+FLAG_FOR_TRANSMITTAL_TO_USER (16)
+FLAG_HAS_URL_FOR_DOWNLOAD (32)</code></pre>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Signable Objects</h3>
+    <p class="ref-desc">Array of DataDescriptor objects to be signed.</p>
+    <div class="ref-snippet">
+<pre><code>[{
+  "version": 1,
+  "label": "example",
+  "objectdata": "0011223344aabbcc",
+  "flags": 1
+}]</code></pre>
+      <button class="copy-btn" type="button" data-copy='[{"version":1,"label":"example","objectdata":"0011223344aabbcc","flags":1}]' title="Copy">Copy</button>
+    </div>
+    <p class="ref-desc" style="margin-top:8px;">flags: 1 = FLAG_LABEL_PRESENT</p>
+  </div>
+
+  <div class="ref-card">
+    <h3>Statements</h3>
+    <p class="ref-desc">Array of text statements to be signed (required when FLAG_HAS_STATEMENTS is set).</p>
+    <div class="ref-snippet">
+<pre><code>["Statement 1", "Statement 2"]</code></pre>
+      <button class="copy-btn" type="button" data-copy='["Statement 1", "Statement 2"]' title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Request ID</h3>
+    <p class="ref-desc">A unique i-address identifier (required when FLAG_HAS_REQUEST_ID is set).</p>
+    <div class="ref-snippet">
+      <code>iJitWFN8PY37GrBVtF38HyftG8WohWipbL</code>
+      <button class="copy-btn" type="button" data-copy="iJitWFN8PY37GrBVtF38HyftG8WohWipbL" title="Copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Redirects JSON</h3>
+    <p class="ref-desc">Array of redirect objects. Type <strong>"1"</strong> = user redirect, <strong>"2"</strong> = POST callback.</p>
+    <div class="ref-snippet">
+<pre><code>[{
+  "type": "1",
+  "uri": "https://www.yourreturnwebsite.com"
+}, {
+  "type": "2",
+  "uri": "https://api.yourpostserverendpoint.com"
+}]</code></pre>
+      <button class="copy-btn" type="button" data-copy='[{"type":"1","uri":"https://www.yourreturnwebsite.com"},{"type":"2","uri":"https://api.yourpostserverendpoint.com"}]' title="Copy">Copy</button>
+    </div>
+  </div>
+</aside>
