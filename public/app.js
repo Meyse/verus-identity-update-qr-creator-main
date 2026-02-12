@@ -1135,20 +1135,6 @@
       }
     };
 
-    // Handle mutual exclusivity between "Has Signature" and "For User's Signature"
-    const handleSignatureFlagExclusivity = (changedCheckbox) => {
-      if (changedCheckbox === flagHasSignatureCheckbox && flagHasSignatureCheckbox?.checked) {
-        if (flagForUsersSignatureCheckbox) {
-          flagForUsersSignatureCheckbox.checked = false;
-        }
-      } else if (changedCheckbox === flagForUsersSignatureCheckbox && flagForUsersSignatureCheckbox?.checked) {
-        if (flagHasSignatureCheckbox) {
-          flagHasSignatureCheckbox.checked = false;
-          resetSignature();
-        }
-      }
-    };
-
     // Toggle conditional fields based on flag checkboxes
     const toggleConditionalFields = () => {
       if (requestIdGroup) {
@@ -1206,7 +1192,6 @@
     }
     if (flagHasSignatureCheckbox) {
       flagHasSignatureCheckbox.addEventListener("change", () => {
-        handleSignatureFlagExclusivity(flagHasSignatureCheckbox);
         toggleConditionalFields();
         toggleDatahashVisibility();
         if (flagHasUrlCheckbox?.checked) {
@@ -1217,7 +1202,6 @@
     }
     if (flagForUsersSignatureCheckbox) {
       flagForUsersSignatureCheckbox.addEventListener("change", () => {
-        handleSignatureFlagExclusivity(flagForUsersSignatureCheckbox);
         toggleConditionalFields();
         toggleDatahashVisibility();
       });
