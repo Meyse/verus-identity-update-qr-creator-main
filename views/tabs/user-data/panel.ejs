@@ -6,6 +6,70 @@
           <h2>User Data Request</h2>
           <p class="hint">Request user data from a VerusID.</p>
 
+          <fieldset>
+            <legend>Data Type <span class="tag required">required</span></legend>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="dataType" value="1" checked />
+                Full Data
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="dataType" value="2" />
+                Partial Data
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="dataType" value="3" />
+                Collection
+              </label>
+            </div>
+            <span class="help">Full Data returns complete object, Partial Data returns zk-proof of specified keys, Collection returns all matching objects.</span>
+          </fieldset>
+
+          <fieldset>
+            <legend>Request Type <span class="tag required">required</span></legend>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="requestType" value="1" checked />
+                Attestation
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="requestType" value="2" />
+                Claim
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="requestType" value="3" />
+                Credential
+              </label>
+            </div>
+            <span class="help">Type of data being requested.</span>
+          </fieldset>
+
+          <label>
+            Search Data Key <span class="tag optional">optional</span>
+            <input id="user-data-search-key" name="searchDataKey" type="text" placeholder="e.g. iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1" />
+            <span class="help">i-address of the key to search for (e.g. vrsc::attestation.name).</span>
+          </label>
+
+          <label>
+            Search Data Value <span class="tag optional">optional</span>
+            <input id="user-data-search-value" name="searchDataValue" type="text" placeholder="e.g. Attestation Name (leave blank to match any value)" />
+            <span class="help">Value to match. Leave blank to search for any object with this key.</span>
+          </label>
+
+          <label>
+            Signer <span class="tag optional">optional</span>
+            <input id="user-data-signer" name="signer" type="text" placeholder="e.g. attestations@" />
+            <span class="help">VerusID of the signer who signed the data you are requesting.</span>
+          </label>
+
+          <div id="user-data-requested-keys-group" hidden>
+            <label>
+              Requested Keys <span class="tag optional">optional</span>
+              <textarea id="user-data-requested-keys" name="requestedKeys" rows="3" placeholder='["iAXYYrZaipc4DAmAKXUFYZxavsf6uBJqaj", "iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23"]'></textarea>
+              <span class="help">JSON array of i-addresses. For Partial Data, these are the keys returned as zk-proof.</span>
+            </label>
+          </div>
+
           <label>
             Request ID <span class="tag optional">optional</span>
             <div class="input-with-action">

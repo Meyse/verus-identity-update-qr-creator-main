@@ -4,7 +4,8 @@ import { BN } from "bn.js";
 import {
   AuthenticationRequestDetails,
   AuthenticationRequestOrdinalVDXFObject,
-  CompactIAddressObject
+  CompactIAddressObject,
+  RecipientConstraint
 } from "verus-typescript-primitives";
 import { primitives } from "verusid-ts-client";
 import {
@@ -35,9 +36,9 @@ function parseRecipientConstraints(
 
   const typeNum = typeof typeValue === "number" ? typeValue : Number(typeValue);
   const allowed = new Set([
-    AuthenticationRequestDetails.REQUIRED_ID,
-    AuthenticationRequestDetails.REQUIRED_SYSTEM,
-    AuthenticationRequestDetails.REQUIRED_PARENT
+    RecipientConstraint.REQUIRED_ID,
+    RecipientConstraint.REQUIRED_SYSTEM,
+    RecipientConstraint.REQUIRED_PARENT
   ]);
 
   if (!Number.isFinite(typeNum) || !allowed.has(typeNum)) {

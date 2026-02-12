@@ -74,7 +74,7 @@ function buildAppEncryptionRequest(params: {
   // Build flags if returnEsk is requested
   let flags: InstanceType<typeof BN> | undefined;
   if (params.returnEsk) {
-    flags = AppEncryptionRequestDetails.RETURN_ESK;
+    flags = AppEncryptionRequestDetails.FLAG_RETURN_ESK;
   }
 
   const detailsParams: Record<string, unknown> = {

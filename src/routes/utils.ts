@@ -2,7 +2,9 @@ import { BN } from "bn.js";
 import {
   VerifiableSignatureData,
   CompactIAddressObject,
-  ResponseURI
+  CompactAddressObject,
+  ResponseURI,
+  fromBase58Check
 } from "verus-typescript-primitives";
 import { VerusIdInterface, primitives } from "verusid-ts-client";
 
@@ -25,6 +27,45 @@ export class ValidationError extends Error {
     super(message);
     this.name = "ValidationError";
   }
+}
+
+/**
+ * Parse an address string and return a CompactAddressObject.
+ * - If the string ends with "@", it's a fully qualified name (TYPE_FQN)
+ * - Otherwise, it's an i-address (TYPE_I_ADDRESS)
+ */
+export function parseAddress(value: unknown, fieldName: string): CompactIAddressObject | undefined {
+  if (value == null || value === "") return undefined;
+  if (typeof value !== "string") {
+    throw new ValidationError(`${fieldName} must be a string.`);
+  }
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  // If ends with @, it's a fully qualified name
+  if (trimmed.endsWith("@")) {
+    return new CompactIAddressObject({
+      version: CompactAddressObject.DEFAULT_VERSION,
+      type: CompactAddressObject.TYPE_FQN,
+      address: trimmed,
+      rootSystemName: "VRSC"
+    });
+  }
+
+  try {
+    // Try parsing as i-address to validate format
+    fromBase58Check(trimmed);
+  } catch (error) {
+    throw new ValidationError(`${fieldName} must be a valid i-address or fully qualified name.`);
+  }
+
+  // Otherwise, treat as i-address
+  return new CompactIAddressObject({
+    version: CompactAddressObject.DEFAULT_VERSION,
+    type: CompactAddressObject.TYPE_I_ADDRESS,
+    address: trimmed,
+    rootSystemName: "VRSC"
+  });
 }
 
 export function requireString(value: unknown, fieldName: string): string {

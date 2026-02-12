@@ -2,5 +2,35 @@
   <div class="ref-card">
     <h3>User Data Request</h3>
     <p class="ref-desc">Requests user-specific data stored on or associated with a VerusID.</p>
+    
+    <h4>Data Types</h4>
+    <ul class="ref-list">
+      <li><strong>Full Data</strong> - Returns the complete data object matching the search criteria.</li>
+      <li><strong>Partial Data</strong> - Returns a zk-proof containing only the specified Requested Keys from the matched object.</li>
+      <li><strong>Collection</strong> - Returns all data objects matching the search criteria.</li>
+    </ul>
+
+    <h4>Request Types</h4>
+    <ul class="ref-list">
+      <li><strong>Attestation</strong> - A signed statement about an identity.</li>
+      <li><strong>Claim</strong> - A claim made by or about an identity.</li>
+      <li><strong>Credential</strong> - A verifiable credential.</li>
+    </ul>
+
+    <h4>Search Data Key</h4>
+    <p class="ref-desc">The i-address of a VDXF key to search for. For example:</p>
+    <ul class="ref-list">
+      <li><code>iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1</code> - vrsc::attestation.name</li>
+      <li><code>i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2</code> - valu.vrsc::claims.employment</li>
+    </ul>
+
+    <h4>Requested Keys (Partial Data only)</h4>
+    <p class="ref-desc">JSON array of i-addresses for keys to include in the zk-proof response. Example:</p>
+    <pre class="ref-code">["iAXYYrZaipc4DAmAKXUFYZxavsf6uBJqaj", "iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23"]</pre>
+
+    <h4>Examples</h4>
+    <p class="ref-desc"><strong>Full Data Request:</strong> Request complete employment attestation from a specific signer.</p>
+    <p class="ref-desc"><strong>Partial Data Request:</strong> Request only email and over21 status as zk-proof.</p>
+    <p class="ref-desc"><strong>Collection Request:</strong> Get all education credentials from a signer.</p>
   </div>
 </aside>

@@ -5,7 +5,7 @@ import {
   DataPacketRequestDetails,
   DataPacketRequestOrdinalVDXFObject,
   DataDescriptor,
-  CompactIAddressObject,
+  CompactAddressObject,
   VerifiableSignatureData,
   URLRef,
   VdxfUniValue,
@@ -17,6 +17,7 @@ import {
   RedirectInput,
   requireString,
   parseJsonField,
+  parseAddress,
   buildGenericRequestFromDetails,
   signRequest,
   getRpcConfig,
@@ -39,37 +40,26 @@ type GenerateDataPacketQrPayload = {
   dataHash?: string;
 };
 
-function parseOptionalIAddress(value: unknown, fieldName: string): CompactIAddressObject | undefined {
-  if (value == null || value === "") return undefined;
-  if (typeof value !== "string") {
-    throw new ValidationError(`${fieldName} must be a string.`);
-  }
-  const trimmed = value.trim();
-  const cleaned = trimmed.endsWith("@") ? trimmed.slice(0, -1) : trimmed;
-  if (!cleaned) return undefined;
-  return CompactIAddressObject.fromAddress(cleaned);
-}
-
 function buildFlags(payload: GenerateDataPacketQrPayload): InstanceType<typeof BN> {
   let flags = new BN(0);
   
   if (payload.flagHasRequestId) {
-    flags = flags.or(DataPacketRequestDetails.HAS_REQUEST_ID);
+    flags = flags.or(DataPacketRequestDetails.FLAG_HAS_REQUEST_ID);
   }
   if (payload.flagHasStatements) {
-    flags = flags.or(DataPacketRequestDetails.HAS_STATEMENTS);
+    flags = flags.or(DataPacketRequestDetails.FLAG_HAS_STATEMENTS);
   }
   if (payload.flagHasSignature) {
-    flags = flags.or(DataPacketRequestDetails.HAS_SIGNATURE);
+    flags = flags.or(DataPacketRequestDetails.FLAG_HAS_SIGNATURE);
   }
   if (payload.flagForUsersSignature) {
-    flags = flags.or(DataPacketRequestDetails.FOR_USERS_SIGNATURE);
+    flags = flags.or(DataPacketRequestDetails.FLAG_FOR_USERS_SIGNATURE);
   }
   if (payload.flagForTransmittalToUser) {
-    flags = flags.or(DataPacketRequestDetails.FOR_TRANSMITTAL_TO_USER);
+    flags = flags.or(DataPacketRequestDetails.FLAG_FOR_TRANSMITTAL_TO_USER);
   }
   if (payload.flagHasUrlForDownload) {
-    flags = flags.or(DataPacketRequestDetails.HAS_URL_FOR_DOWNLOAD);
+    flags = flags.or(DataPacketRequestDetails.FLAG_HAS_URL_FOR_DOWNLOAD);
   }
   
   return flags;
@@ -190,7 +180,7 @@ function buildDataPacketRequest(params: {
   flags: InstanceType<typeof BN>;
   signableObjects: DataDescriptor[];
   statements?: string[];
-  requestId?: CompactIAddressObject;
+  requestId?: CompactAddressObject;
   redirects?: RedirectInput[];
 }): primitives.GenericRequest {
   const detailsParams: Record<string, unknown> = {
@@ -225,7 +215,7 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
     const flags = buildFlags(payload);
     let signableObjects: DataDescriptor[] = [];
     const statements = parseStatements(payload.statements);
-    const requestId = parseOptionalIAddress(payload.requestId, "requestId");
+    const requestId = parseAddress(payload.requestId, "requestId");
 
     // When flagHasUrlForDownload is set, signableObjects is ONLY the URL DataDescriptor
     if (payload.flagHasUrlForDownload) {
@@ -318,7 +308,7 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
     const flags = buildFlags(payload);
     let signableObjects: DataDescriptor[] = [];
     const statements = parseStatements(payload.statements);
-    const requestId = parseOptionalIAddress(payload.requestId, "requestId");
+    const requestId = parseAddress(payload.requestId, "requestId");
 
     // When flagHasUrlForDownload is set, signableObjects is ONLY the URL DataDescriptor
     if (payload.flagHasUrlForDownload) {

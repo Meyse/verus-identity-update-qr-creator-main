@@ -1467,6 +1467,140 @@
     });
   };
 
+  // ── User Data Form ───────────────────────────────────────────────────
+
+  const setupUserDataForm = () => {
+    const form = document.getElementById("user-data-form");
+    const statusEl = document.getElementById("user-data-status");
+    const errorEl = document.getElementById("user-data-error");
+    const resultEl = document.getElementById("user-data-result");
+    const qrImage = document.getElementById("user-data-qr-image");
+    const deeplinkEl = document.getElementById("user-data-deeplink");
+    const copyButton = document.getElementById("user-data-copy-button");
+    const submitButton = document.getElementById("user-data-submit-button");
+    const requestIdInput = document.getElementById("user-data-request-id");
+    const requestIdGenerateButton = document.getElementById("user-data-request-id-generate");
+    const requestedKeysGroup = document.getElementById("user-data-requested-keys-group");
+
+    if (
+      !form ||
+      !statusEl ||
+      !errorEl ||
+      !resultEl ||
+      !qrImage ||
+      !deeplinkEl ||
+      !copyButton ||
+      !submitButton
+    ) {
+      return;
+    }
+
+    // Toggle requested keys visibility based on data type selection
+    const toggleRequestedKeysVisibility = () => {
+      const selectedDataType = form.querySelector('input[name="dataType"]:checked');
+      const isPartialData = selectedDataType && selectedDataType.value === "2";
+      if (requestedKeysGroup) {
+        requestedKeysGroup.hidden = !isPartialData;
+      }
+    };
+
+    // Add event listeners for data type radio buttons
+    const dataTypeRadios = form.querySelectorAll('input[name="dataType"]');
+    dataTypeRadios.forEach((radio) => {
+      radio.addEventListener("change", toggleRequestedKeysVisibility);
+    });
+    toggleRequestedKeysVisibility();
+
+    setupRequestIdGenerator(requestIdInput, requestIdGenerateButton, statusEl, errorEl);
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError(errorEl);
+      resultEl.hidden = true;
+      setStatus(statusEl, "Generating QR code...");
+      submitButton.disabled = true;
+
+      try {
+        const signingId = getGlobalSigningId();
+        if (!signingId) {
+          throw new Error("Signing ID is required (set in the global header above).");
+        }
+
+        const selectedDataType = form.querySelector('input[name="dataType"]:checked');
+        const selectedRequestType = form.querySelector('input[name="requestType"]:checked');
+        
+        const dataType = selectedDataType ? Number(selectedDataType.value) : 1;
+        const requestType = selectedRequestType ? Number(selectedRequestType.value) : 1;
+        
+        const searchDataKey = getInputValue("user-data-search-key").trim() || undefined;
+        const searchDataValue = getInputValue("user-data-search-value").trim();
+        const signer = getInputValue("user-data-signer").trim() || undefined;
+        const requestedKeysText = getInputValue("user-data-requested-keys");
+        const requestId = getInputValue("user-data-request-id").trim() || undefined;
+        const redirectsText = getInputValue("user-data-redirects");
+
+        const requestedKeys = parseJsonField(requestedKeysText, "Requested Keys JSON", false);
+        const redirects = parseJsonField(redirectsText, "Redirects JSON", false);
+
+        // Validate requested keys only for Partial Data
+        if (dataType === 2 && requestedKeys && !Array.isArray(requestedKeys)) {
+          throw new Error("Requested Keys must be a JSON array of i-addresses.");
+        }
+        if (dataType !== 2 && requestedKeys && Array.isArray(requestedKeys) && requestedKeys.length > 0) {
+          throw new Error("Requested Keys can only be used with Partial Data type.");
+        }
+
+        const payload = {
+          signingId,
+          dataType,
+          requestType,
+          searchDataKey,
+          searchDataValue: searchDataKey ? searchDataValue : undefined,
+          signer,
+          requestedKeys: dataType === 2 ? requestedKeys : undefined,
+          requestId,
+          redirects
+        };
+
+        const response = await fetch("/api/generate-user-data-qr", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to generate QR.");
+        }
+
+        qrImage.src = data.qrDataUrl;
+        qrImage.alt = "QR Code for user data request";
+        deeplinkEl.value = data.deeplink;
+        resultEl.hidden = false;
+        setStatus(statusEl, "QR generated.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unexpected error.";
+        showError(errorEl, message);
+        setStatus(statusEl, "");
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    copyButton.addEventListener("click", async () => {
+      if (!deeplinkEl.value) return;
+      try {
+        await navigator.clipboard.writeText(deeplinkEl.value);
+        setStatus(statusEl, "Deeplink copied.");
+        setTimeout(() => setStatus(statusEl, ""), 2000);
+      } catch (error) {
+        setStatus(statusEl, "Copy failed. Select and copy manually.");
+      }
+    });
+  };
+
   // ── Init ─────────────────────────────────────────────────────────────
 
   setupTabs();
@@ -1475,6 +1609,7 @@
   setupInvoiceForm();
   setupAppEncryptionForm();
   setupDataPacketForm();
+  setupUserDataForm();
   setupCopyButtons();
   wireGlobalSigningIdDropdown();
   loadIdentities();
