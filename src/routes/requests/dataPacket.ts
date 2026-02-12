@@ -222,11 +222,6 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
     const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
     
-    // Validate mutual exclusivity of signature flags
-    if (payload.flagHasSignature && payload.flagForUsersSignature) {
-      throw new ValidationError("'Has Signature' and 'For User's Signature' are mutually exclusive.");
-    }
-    
     const flags = buildFlags(payload);
     let signableObjects: DataDescriptor[] = [];
     const statements = parseStatements(payload.statements);
@@ -319,11 +314,6 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
     const payload = req.body as SignDataPacketPayload;
     const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
-    
-    // Validate mutual exclusivity of signature flags
-    if (payload.flagHasSignature && payload.flagForUsersSignature) {
-      throw new ValidationError("'Has Signature' and 'For User's Signature' are mutually exclusive.");
-    }
     
     const flags = buildFlags(payload);
     let signableObjects: DataDescriptor[] = [];
