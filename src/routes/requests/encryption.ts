@@ -4,7 +4,9 @@ import { BN } from "bn.js";
 import {
   AppEncryptionRequestDetails,
   AppEncryptionRequestOrdinalVDXFObject,
-  CompactIAddressObject
+  CompactAddressObject,
+  CompactIAddressObject,
+  fromBase58Check
 } from "verus-typescript-primitives";
 import { primitives } from "verusid-ts-client";
 import {
@@ -56,10 +58,24 @@ function parseOptionalIAddress(value: unknown, fieldName: string): CompactIAddre
     throw new ValidationError(`${fieldName} must be a string.`);
   }
   const trimmed = value.trim();
-  // Remove trailing @ if present (friendly name format)
-  const cleaned = trimmed.endsWith("@") ? trimmed.slice(0, -1) : trimmed;
-  if (!cleaned) return undefined;
-  return CompactIAddressObject.fromAddress(cleaned);
+
+  if (!trimmed.endsWith("@"))  {
+    try {
+      // Try parsing as i-address to validate format
+      fromBase58Check(trimmed);
+    } catch (error) {
+      throw new ValidationError(`${fieldName} must be a valid i-address or fully qualified name.`);
+    }
+  }
+
+  const compactAddressObjectTemp = new CompactIAddressObject({
+    version: CompactAddressObject.DEFAULT_VERSION,
+    type: CompactAddressObject.TYPE_FQN,
+    address: trimmed,
+    rootSystemName: "VRSC"
+  });
+
+  return compactAddressObjectTemp;
 }
 
 function buildAppEncryptionRequest(params: {
