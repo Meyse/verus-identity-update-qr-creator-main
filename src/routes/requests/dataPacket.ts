@@ -38,6 +38,7 @@ type GenerateDataPacketQrPayload = {
   redirects?: unknown;
   downloadUrl?: string;
   dataHash?: string;
+  signature?: unknown;
 };
 
 function buildFlags(payload: GenerateDataPacketQrPayload): InstanceType<typeof BN> {
@@ -148,6 +149,33 @@ function validateDataHash(dataHash: string | undefined): Buffer | undefined {
   return Buffer.from(trimmed, 'hex');
 }
 
+function parseSignature(value: unknown): VerifiableSignatureData | undefined {
+  if (value == null || value === "" || value === "{}") {
+    return undefined;
+  }
+  
+  let parsed: Record<string, unknown>;
+  if (typeof value === "string") {
+    try {
+      parsed = JSON.parse(value);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid JSON";
+      throw new ValidationError(`Invalid JSON for signature: ${message}`);
+    }
+  } else if (typeof value === "object" && value !== null) {
+    parsed = value as Record<string, unknown>;
+  } else {
+    throw new ValidationError("signature must be a JSON object.");
+  }
+  
+  try {
+    return VerifiableSignatureData.fromJson(parsed as any);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid signature object";
+    throw new ValidationError(`Invalid VerifiableSignatureData: ${message}`);
+  }
+}
+
 function buildUrlDataDescriptor(url: string, dataHash?: string): DataDescriptor {
   // Validate and convert dataHash to Buffer if provided
   const dataHashBuffer = validateDataHash(dataHash);
@@ -182,18 +210,22 @@ function buildDataPacketRequest(params: {
   statements?: string[];
   requestId?: CompactAddressObject;
   redirects?: RedirectInput[];
+  signature?: VerifiableSignatureData;
 }): primitives.GenericRequest {
   const detailsParams: Record<string, unknown> = {
     version: new BN(1),
     flags: params.flags,
     signableObjects: params.signableObjects
   };
-  
+  console.log("Building DataPacketRequest with detailsParams:", detailsParams);
   if (params.statements && params.statements.length > 0) {
     detailsParams.statements = params.statements;
   }
   if (params.requestId) {
     detailsParams.requestID = params.requestId;
+  }
+  if (params.signature) {
+    detailsParams.signature = params.signature;
   }
 
   const details = new DataPacketRequestDetails(detailsParams as any);
@@ -214,8 +246,9 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
     
     const flags = buildFlags(payload);
     let signableObjects: DataDescriptor[] = [];
-    const statements = parseStatements(payload.statements);
-    const requestId = parseAddress(payload.requestId, "requestId");
+    // Only parse statements/requestId if their respective flags are set
+    const statements = payload.flagHasStatements ? parseStatements(payload.statements) : undefined;
+    const requestId = payload.flagHasRequestId ? parseAddress(payload.requestId, "requestId") : undefined;
 
     // When flagHasUrlForDownload is set, signableObjects is ONLY the URL DataDescriptor
     if (payload.flagHasUrlForDownload) {
@@ -240,12 +273,18 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
       throw new ValidationError("redirects must be a non-empty JSON array.");
     }
 
+    // Parse signature only if the flag is set
+    const signature = payload.flagHasSignature ? parseSignature(payload.signature) : undefined;
+
     // Validate flag consistency
     if (payload.flagHasStatements && (!statements || statements.length === 0)) {
       throw new ValidationError("Statements are required when FLAG_HAS_STATEMENTS is set.");
     }
     if (payload.flagHasRequestId && !requestId) {
       throw new ValidationError("Request ID is required when FLAG_HAS_REQUEST_ID is set.");
+    }
+    if (payload.flagHasSignature && !signature) {
+      throw new ValidationError("Signature is required when FLAG_HAS_SIGNATURE is set.");
     }
 
     const reqToSign = buildDataPacketRequest({
@@ -254,7 +293,8 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
       signableObjects,
       statements,
       requestId,
-      redirects
+      redirects,
+      signature
     });
 
     await signRequest({
@@ -297,6 +337,7 @@ type SignDataPacketPayload = {
   requestId?: string;
   downloadUrl?: string;
   dataHash?: string;
+  signature?: unknown;
 };
 
 export async function signDataPacket(req: Request, res: Response): Promise<void> {
@@ -307,8 +348,9 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
     
     const flags = buildFlags(payload);
     let signableObjects: DataDescriptor[] = [];
-    const statements = parseStatements(payload.statements);
-    const requestId = parseAddress(payload.requestId, "requestId");
+    // Only parse statements if the flag is set
+    const statements = payload.flagHasStatements ? parseStatements(payload.statements) : undefined;
+    const requestId = payload.flagHasRequestId ? parseAddress(payload.requestId, "requestId") : undefined;
 
     // When flagHasUrlForDownload is set, signableObjects is ONLY the URL DataDescriptor
     if (payload.flagHasUrlForDownload) {
@@ -323,6 +365,9 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
       signableObjects = parseSignableObjects(payload.signableObjects);
     }
 
+    // Parse signature if provided (optional - this endpoint creates signatures)
+    const signature = payload.flagHasSignature ? parseSignature(payload.signature) : undefined;
+
     // Build the DataPacketRequestDetails
     const detailsParams: Record<string, unknown> = {
       version: new BN(1),
@@ -335,6 +380,9 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
     }
     if (requestId) {
       detailsParams.requestID = requestId;
+    }
+    if (signature) {
+      detailsParams.signature = signature;
     }
 
     const details = new DataPacketRequestDetails(detailsParams as any);
@@ -353,7 +401,7 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
         }
       }
     );
-
+    console.log("Requesting signature with messageHex:", messageHex, "and signingId:", signingId);
     const sigRes = await verusId.interface.request({
       cmd: "signdata",
       getParams: () => [{

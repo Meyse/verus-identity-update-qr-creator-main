@@ -1425,7 +1425,8 @@
           requestId,
           redirects,
           downloadUrl,
-          dataHash
+          dataHash,
+          signature: flagHasSignature ? dataPacketSignatureData : undefined
         };
 
         const response = await fetch("/api/generate-data-packet-qr", {
