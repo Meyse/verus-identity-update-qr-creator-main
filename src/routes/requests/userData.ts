@@ -88,6 +88,7 @@ function buildUserDataRequest(params: {
   requestedKeys?: string[];
   requestId?: CompactIAddressObject;
   redirects?: RedirectInput[];
+  isTestnet?: boolean;
 }): primitives.GenericRequest {
   const detailsParams: Record<string, unknown> = {
     version: new BN(1),
@@ -114,13 +115,13 @@ function buildUserDataRequest(params: {
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
-  });
+  }, params.isTestnet ?? false);
 }
 
 export async function generateUserDataQr(req: Request, res: Response): Promise<void> {
   try {
     const payload = req.body as GenerateUserDataQrPayload;
-    const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
+    const { rpcHost, rpcPort, rpcUser, rpcPassword, isTestnet } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
     
     // Parse data type (default to FULL_DATA)
@@ -171,7 +172,8 @@ export async function generateUserDataQr(req: Request, res: Response): Promise<v
       signer,
       requestedKeys,
       requestId,
-      redirects: redirects || undefined
+      redirects: redirects || undefined,
+      isTestnet
     });
 
     await signRequest({

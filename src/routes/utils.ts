@@ -137,13 +137,14 @@ export function buildGenericRequestFromDetails(params: {
   signed: boolean;
   signingId?: string;
   redirects?: RedirectInput[];
-}): primitives.GenericRequest {
+}, isTestnet: boolean ): primitives.GenericRequest {
   const responseURIs = buildResponseUris(params.redirects);
 
   const req = new primitives.GenericRequest({
     details: params.details,
     createdAt: new BN((Date.now() / 1000).toFixed(0)),
-    responseURIs
+    responseURIs,
+    flags: isTestnet ? primitives.GenericRequest.FLAG_IS_TESTNET : primitives.GenericRequest.BASE_FLAGS
   });
 
   if (params.signed) {
@@ -205,6 +206,7 @@ export function getRpcConfig() {
   const rpcPort = parseNumber(RPC_PORT, "RPC_PORT", 18843);
   const rpcUser = requireString(RPC_USER, "RPC_USER");
   const rpcPassword = requireString(RPC_PASSWORD, "RPC_PASSWORD");
+  const isTestnet = rpcPort === 18843;
 
-  return { rpcHost, rpcPort, rpcUser, rpcPassword };
+  return { rpcHost, rpcPort, rpcUser, rpcPassword, isTestnet };
 }

@@ -1,9 +1,10 @@
 // Updated: add sample type 2 POST callback in REDIRECTS.
 const conf = {
   // RPC Info
+  RPC_HOST: "192.168.1.101",
   RPC_PORT: 18843,
-  RPC_USER: "APFPOIUpX_Q02VtinRIk8w_t3hGm5y0k-Wcp8ACLSGc",
-  RPC_PASSWORD: "eDnlHNj-zwtve3I8QF5Fo4SOR1vQAECevE1JNtmnx9o",
+  RPC_USER: "user570503609",
+  RPC_PASSWORD: "pass60358b4160dca38900ed090db83b46d7ff316ac3dc7013394e1ca1b150925803c2",
 
   // What you would normally pass to 'jsonidentity' when calling updateidentity
   JSON_IDENTITY_CHANGES: {

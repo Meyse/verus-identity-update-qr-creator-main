@@ -86,6 +86,7 @@ function buildAppEncryptionRequest(params: {
   requestId?: CompactIAddressObject;
   returnEsk?: boolean;
   redirects?: RedirectInput[];
+  isTestnet?: boolean;
 }): primitives.GenericRequest {
   // Build flags if returnEsk is requested
   let flags: InstanceType<typeof BN> | undefined;
@@ -116,13 +117,13 @@ function buildAppEncryptionRequest(params: {
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
-  });
+  }, params.isTestnet ?? false);
 }
 
 export async function generateAppEncryptionQr(req: Request, res: Response): Promise<void> {
   try {
     const payload = req.body as GenerateAppEncryptionQrPayload;
-    const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
+    const { rpcHost, rpcPort, rpcUser, rpcPassword, isTestnet } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
     
     const encryptToZAddress = parseOptionalZAddress(payload.encryptToZAddress, "encryptToZAddress");
@@ -148,7 +149,8 @@ export async function generateAppEncryptionQr(req: Request, res: Response): Prom
       derivationID,
       requestId,
       returnEsk,
-      redirects
+      redirects,
+      isTestnet
     });
 
     await signRequest({

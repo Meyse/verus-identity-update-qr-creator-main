@@ -49,9 +49,14 @@
             <div id="data-packet-datahash-group" hidden>
               <label>
                 Data Hash <span class="tag required">required when signing</span>
-                <input id="data-packet-datahash" name="dataHash" type="text" placeholder="64 hex characters (32 bytes)" maxlength="64" pattern="[0-9a-fA-F]{64}" />
-                <span class="help">32-byte hash (64 hex characters) of the data at the URL. Required when both Has Signature and Has URL are set.</span>
+                <div class="input-with-action">
+                  <input id="data-packet-datahash" name="dataHash" type="text" placeholder="64 hex characters (32 bytes)" maxlength="64" pattern="[0-9a-fA-F]{64}" />
+                  <button id="data-packet-fetch-hash-button" type="button">Fetch &amp; Hash</button>
+                </div>
+                <span id="data-packet-fetch-hash-status" class="status" aria-live="polite"></span>
+                <span class="help">32-byte SHA256 hash (64 hex characters) of the data at the URL. Click "Fetch &amp; Hash" to auto-populate from the Download URL.</span>
               </label>
+              <div id="data-packet-fetch-hash-error" class="error" hidden></div>
             </div>
           </div>
 
@@ -129,6 +134,10 @@
             <button id="data-packet-copy-button" type="button">Copy deeplink</button>
           </div>
         </div>
+        <label>
+          Parsed GenericRequest JSON
+          <pre id="data-packet-parsed-json" style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow: auto; max-height: 400px; font-size: 0.85em; font-weight: normal;"></pre>
+        </label>
       </section>
     </div>
 

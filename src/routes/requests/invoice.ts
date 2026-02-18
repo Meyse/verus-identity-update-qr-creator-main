@@ -121,7 +121,7 @@ function buildInvoiceRequest(params: {
     signed: params.signed,
     signingId: params.signingId,
     redirects: params.redirects
-  });
+  }, params.isTestnet);
 }
 
 export async function generateInvoiceQr(req: Request, res: Response): Promise<void> {

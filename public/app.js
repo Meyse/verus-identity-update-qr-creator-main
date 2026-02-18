@@ -1127,13 +1127,58 @@
       signableObjectsTextarea.value = preview;
     };
 
-    // Toggle datahash visibility based on both Has Signature and Has URL flags
+    const fetchHashButton = document.getElementById("data-packet-fetch-hash-button");
+    const fetchHashStatus = document.getElementById("data-packet-fetch-hash-status");
+    const fetchHashError = document.getElementById("data-packet-fetch-hash-error");
+
+    // Toggle datahash visibility based on Has URL flag
     const toggleDatahashVisibility = () => {
       if (datahashGroup) {
-        const showDatahash = flagHasSignatureCheckbox?.checked && flagHasUrlCheckbox?.checked;
-        datahashGroup.hidden = !showDatahash;
+        datahashGroup.hidden = !flagHasUrlCheckbox?.checked;
       }
     };
+
+    // Fetch data from URL, hash it with SHA256, and populate datahash field
+    if (fetchHashButton) {
+      fetchHashButton.addEventListener("click", async () => {
+        if (fetchHashError) { fetchHashError.textContent = ""; fetchHashError.hidden = true; }
+        if (fetchHashStatus) setStatus(fetchHashStatus, "");
+
+        const url = downloadUrlInput?.value.trim();
+        if (!url) {
+          if (fetchHashError) { fetchHashError.textContent = "Enter a Download URL first."; fetchHashError.hidden = false; }
+          return;
+        }
+
+        fetchHashButton.disabled = true;
+        if (fetchHashStatus) setStatus(fetchHashStatus, "Fetching & hashing...");
+
+        try {
+          const response = await fetch("/api/fetch-and-hash-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to fetch and hash URL.");
+          }
+          if (datahashInput) {
+            datahashInput.value = data.dataHash;
+            // Trigger input event so signable objects preview updates
+            datahashInput.dispatchEvent(new Event("input"));
+          }
+          if (fetchHashStatus) setStatus(fetchHashStatus, "Hash generated.");
+          setTimeout(() => { if (fetchHashStatus) setStatus(fetchHashStatus, ""); }, 3000);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unexpected error.";
+          if (fetchHashError) { fetchHashError.textContent = message; fetchHashError.hidden = false; }
+          if (fetchHashStatus) setStatus(fetchHashStatus, "");
+        } finally {
+          fetchHashButton.disabled = false;
+        }
+      });
+    }
 
     // Toggle conditional fields based on flag checkboxes
     const toggleConditionalFields = () => {
@@ -1445,6 +1490,11 @@
         qrImage.src = data.qrDataUrl;
         qrImage.alt = "QR Code for data packet request";
         deeplinkEl.value = data.deeplink;
+        // Display parsed GenericRequest JSON
+        const parsedJsonEl = document.getElementById("data-packet-parsed-json");
+        if (parsedJsonEl && data.parsedRequest) {
+          parsedJsonEl.textContent = JSON.stringify(data.parsedRequest, null, 2);
+        }
         resultEl.hidden = false;
         setStatus(statusEl, "QR generated.");
       } catch (error) {

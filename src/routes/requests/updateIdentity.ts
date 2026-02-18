@@ -28,6 +28,7 @@ function buildUpdateRequest(params: {
   requestId?: string;
   signingId: string;
   redirects?: RedirectInput[];
+  isTestnet?: boolean;
 }): primitives.GenericRequest {
   const detailsOverrides = params.requestId
     ? { requestid: CompactIAddressObject.fromAddress(params.requestId).toJson() }
@@ -42,13 +43,13 @@ function buildUpdateRequest(params: {
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
-  });
+  }, params.isTestnet ?? false);
 }
 
 export async function generateQr(req: Request, res: Response): Promise<void> {
   try {
     const payload = req.body as GenerateUpdateQrPayload;
-    const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
+    const { rpcHost, rpcPort, rpcUser, rpcPassword, isTestnet } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
     const requestId = typeof payload.requestId === "string" && payload.requestId.trim().length > 0
       ? payload.requestId.trim()
@@ -78,7 +79,8 @@ export async function generateQr(req: Request, res: Response): Promise<void> {
       identityChanges,
       requestId,
       signingId,
-      redirects
+      redirects,
+      isTestnet
     });
 
     await signRequest({

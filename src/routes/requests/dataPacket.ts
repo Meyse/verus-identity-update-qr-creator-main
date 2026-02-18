@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as QRCode from "qrcode";
 import { BN } from "bn.js";
+import * as crypto from "crypto";
 import {
   DataPacketRequestDetails,
   DataPacketRequestOrdinalVDXFObject,
@@ -9,7 +10,8 @@ import {
   VerifiableSignatureData,
   URLRef,
   VdxfUniValue,
-  CrossChainDataRefKey
+  CrossChainDataRefKey,
+  CrossChainDataRef
 } from "verus-typescript-primitives";
 import { primitives, VerusIdInterface } from "verusid-ts-client";
 import {
@@ -44,6 +46,7 @@ type GenerateDataPacketQrPayload = {
 function buildFlags(payload: GenerateDataPacketQrPayload): InstanceType<typeof BN> {
   let flags = new BN(0);
   
+ 
   if (payload.flagHasRequestId) {
     flags = flags.or(DataPacketRequestDetails.FLAG_HAS_REQUEST_ID);
   }
@@ -57,6 +60,7 @@ function buildFlags(payload: GenerateDataPacketQrPayload): InstanceType<typeof B
     flags = flags.or(DataPacketRequestDetails.FLAG_FOR_USERS_SIGNATURE);
   }
   if (payload.flagForTransmittalToUser) {
+     console.log("Setting FLAG_FOR_TRANSMITTAL_TO_USER", payload);
     flags = flags.or(DataPacketRequestDetails.FLAG_FOR_TRANSMITTAL_TO_USER);
   }
   if (payload.flagHasUrlForDownload) {
@@ -64,6 +68,17 @@ function buildFlags(payload: GenerateDataPacketQrPayload): InstanceType<typeof B
   }
   
   return flags;
+}
+
+// Workaround: DataPacketRequestDetails.calcFlags() only sets flags 1, 2, 4 based on data presence.
+// It ignores user-controlled flags 8, 16, 32. We need to manually OR them in after construction.
+function applyUserControlledFlags(details: DataPacketRequestDetails, originalFlags: InstanceType<typeof BN>): void {
+  const userControlledFlags = originalFlags.and(
+    DataPacketRequestDetails.FLAG_FOR_USERS_SIGNATURE
+      .or(DataPacketRequestDetails.FLAG_FOR_TRANSMITTAL_TO_USER)
+      .or(DataPacketRequestDetails.FLAG_HAS_URL_FOR_DOWNLOAD)
+  );
+  details.flags = details.flags.or(userControlledFlags);
 }
 
 function parseSignableObjects(value: unknown): DataDescriptor[] {
@@ -179,21 +194,22 @@ function parseSignature(value: unknown): VerifiableSignatureData | undefined {
 function buildUrlDataDescriptor(url: string, dataHash?: string): DataDescriptor {
   // Validate and convert dataHash to Buffer if provided
   const dataHashBuffer = validateDataHash(dataHash);
-  
   // Create URLRef with version 1, URL, and optional datahash
-  const urlRefParams: Record<string, unknown> = { version: new BN(1), url: url };
+  const urlRefParams: Record<string, unknown> = { version: URLRef.LAST_VERSION, url: url };
   if (dataHashBuffer) {
-    urlRefParams.datahash = dataHashBuffer;
+    urlRefParams.flags = URLRef.FLAG_HAS_HASH;
+    urlRefParams.data_hash = dataHashBuffer;
   }
   const urlRef = new URLRef(urlRefParams as any);
+
+  const ccdref = new CrossChainDataRef(urlRef)
   
   // Create a map with the CrossChainDataRefKey pointing to the URLRef
   const urlRefMap: Array<{[key: string]: any}> = [];
-  urlRefMap.push({ [CrossChainDataRefKey.vdxfid]: urlRef });
+  urlRefMap.push({ [CrossChainDataRefKey.vdxfid]: ccdref });
   
   // Create VdxfUniValue from the map
   const urlRefUniValue = new VdxfUniValue({ values: urlRefMap });
-  
   // Create DataDescriptor with the serialized VdxfUniValue
   const urlDescriptor = DataDescriptor.fromJson({
     version: 1,
@@ -211,13 +227,14 @@ function buildDataPacketRequest(params: {
   requestId?: CompactAddressObject;
   redirects?: RedirectInput[];
   signature?: VerifiableSignatureData;
+  isTestnet?: boolean;
 }): primitives.GenericRequest {
   const detailsParams: Record<string, unknown> = {
     version: new BN(1),
     flags: params.flags,
     signableObjects: params.signableObjects
   };
-  console.log("Building DataPacketRequest with detailsParams:", detailsParams);
+
   if (params.statements && params.statements.length > 0) {
     detailsParams.statements = params.statements;
   }
@@ -229,19 +246,22 @@ function buildDataPacketRequest(params: {
   }
 
   const details = new DataPacketRequestDetails(detailsParams as any);
+  
+  // Workaround: apply user-controlled flags that calcFlags() ignores
+  applyUserControlledFlags(details, params.flags);
 
   return buildGenericRequestFromDetails({
     details: [new DataPacketRequestOrdinalVDXFObject({ data: details })],
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
-  });
+  }, params.isTestnet ?? false);
 }
 
 export async function generateDataPacketQr(req: Request, res: Response): Promise<void> {
   try {
     const payload = req.body as GenerateDataPacketQrPayload;
-    const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
+    const { rpcHost, rpcPort, rpcUser, rpcPassword, isTestnet } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
     
     const flags = buildFlags(payload);
@@ -294,7 +314,8 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
       statements,
       requestId,
       redirects,
-      signature
+      signature,
+      isTestnet
     });
 
     await signRequest({
@@ -313,7 +334,21 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
       scale: 6
     });
 
-    res.json({ deeplink, qrDataUrl });
+    // Parse the deeplink back to get the GenericRequest JSON for display
+    const checkResult = primitives.GenericRequest.fromWalletDeeplinkUri(deeplink);
+    const parsedRequest = checkResult.toJson() as Record<string, unknown>;
+    
+    // Workaround: The library's toJson() uses calcFlags() which ignores user-controlled flags.
+    // The actual deeplink is correct (toBuffer uses this.flags), but we need to fix the display.
+    // Patch the details[0].data.flags with the correct value we computed.
+    if (Array.isArray(parsedRequest.details) && parsedRequest.details.length > 0) {
+      const detail = parsedRequest.details[0] as Record<string, unknown>;
+      if (detail && typeof detail.data === "object" && detail.data !== null) {
+        (detail.data as Record<string, unknown>).flags = flags.toNumber();
+      }
+    }
+
+    res.json({ deeplink, qrDataUrl, parsedRequest });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error.";
     const status = error instanceof ValidationError ? 400 : 500;
@@ -387,6 +422,9 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
 
     const details = new DataPacketRequestDetails(detailsParams as any);
     
+    // Workaround: apply user-controlled flags that calcFlags() ignores
+    applyUserControlledFlags(details, flags);
+    
     // Get the hex of the DataPacketRequestDetails buffer
     const messageHex = details.toBuffer().toString("hex");
 
@@ -432,6 +470,46 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
     const status = error instanceof ValidationError ? 400 : 500;
     if (status === 500) {
       console.error("Data Packet signing failed:", error);
+    }
+    res.status(status).json({ error: message });
+  }
+}
+
+export async function fetchAndHashUrl(req: Request, res: Response): Promise<void> {
+  try {
+    const { url } = req.body as { url?: string };
+    if (!url || typeof url !== "string" || !url.trim()) {
+      throw new ValidationError("URL is required.");
+    }
+
+    const response = await fetch(url.trim());
+    if (!response.ok) {
+      throw new ValidationError(`Failed to fetch URL: HTTP ${response.status} ${response.statusText}`);
+    }
+
+    const text = await response.text();
+    const trimmed = text.trim();
+
+    if (!trimmed) {
+      throw new ValidationError("URL returned empty content.");
+    }
+
+    // Validate it's a hex string
+    if (!/^[0-9a-fA-F]+$/.test(trimmed)) {
+      throw new ValidationError("URL content is not a valid hex string.");
+    }
+
+    // Convert hex to buffer and SHA256 hash it
+    const dataBuffer = Buffer.from(trimmed, "hex");
+    const hash = crypto.createHash("sha256").update(dataBuffer).digest("hex");
+    console.log("Fetched data from URL and computed hash:", hash, dataBuffer.toString("hex"));
+
+    res.json({ dataHash: hash });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected error.";
+    const status = error instanceof ValidationError ? 400 : 500;
+    if (status === 500) {
+      console.error("Fetch and hash URL failed:", error);
     }
     res.status(status).json({ error: message });
   }

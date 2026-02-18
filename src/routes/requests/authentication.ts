@@ -60,6 +60,7 @@ function buildAuthRequest(params: {
   expiryTime?: number;
   recipientConstraints?: Array<{ type: number; identity: CompactIAddressObject }>;
   redirects?: RedirectInput[];
+  isTestnet?: boolean;
 }): primitives.GenericRequest {
   const details = new AuthenticationRequestDetails({
     requestID: CompactIAddressObject.fromAddress(params.requestId),
@@ -72,13 +73,13 @@ function buildAuthRequest(params: {
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
-  });
+  }, params.isTestnet ?? false);
 }
 
 export async function generateAuthQr(req: Request, res: Response): Promise<void> {
   try {
     const payload = req.body as GenerateAuthQrPayload;
-    const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
+    const { rpcHost, rpcPort, rpcUser, rpcPassword, isTestnet } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
     const requestId = requireString(payload.requestId, "requestId");
     const expiryTime = parseOptionalPositiveNumber(payload.expiryTime, "expiryTime");
@@ -103,7 +104,8 @@ export async function generateAuthQr(req: Request, res: Response): Promise<void>
       requestId,
       expiryTime,
       recipientConstraints,
-      redirects
+      redirects,
+      isTestnet
     });
 
     await signRequest({
