@@ -33,6 +33,17 @@
               For Transmittal to User
               <span class="help">Data intended for transmission to the user.</span>
             </label>
+
+            <div id="data-packet-recipient-toggle" hidden style="margin-left: 1.5rem; margin-top: 0.25rem;">
+              <button id="data-packet-add-recipient-button" type="button" class="small-action-button" style="font-size: 0.85em; padding: 0.25em 0.6em; cursor: pointer;">+ Add Recipient for DataPacket</button>
+              <div id="data-packet-recipient-group" hidden style="margin-top: 0.5rem;">
+                <label>
+                  Recipient Identity <span class="tag optional">optional</span>
+                  <input id="data-packet-recipient-identity" name="recipientIdentity" type="text" placeholder="e.g. johndoe@" />
+                  <span class="help">Identity that should receive this data packet (e.g. johndoe@ or an i-address). Adds a RecipientConstraint to the request.</span>
+                </label>
+              </div>
+            </div>
             <label class="checkbox-label">
               <input id="data-packet-flag-has-url" name="flagHasUrlForDownload" type="checkbox" />
               Has URL for Download
@@ -62,7 +73,7 @@
 
           <label id="data-packet-signable-objects-label">
             Signable Objects JSON <span id="data-packet-signable-objects-tag" class="tag optional">optional</span>
-            <textarea id="data-packet-signable-objects" name="signableObjects" rows="6">[{"version": 1, "label": "example", "objectdata": "0011223344", "flags": 1}]</textarea>
+            <textarea id="data-packet-signable-objects" name="signableObjects" rows="6">[{"version": 1, "label": "example", "objectdata": "0011223344", "flags": 32}]</textarea>
             <span id="data-packet-signable-objects-help" class="help">Array of DataDescriptor objects. Each needs: version, label, objectdata (hex), flags.</span>
           </label>
 
@@ -107,8 +118,8 @@
           </div>
 
           <label>
-            Redirects JSON <span class="tag required">required</span>
-            <textarea id="data-packet-redirects" name="redirects" rows="4" required>[{"type":"1","uri":"https://www.yourreturnwebsite.com"},{"type":"2","uri":"https://api.yourpostserverendpoint.com"}]</textarea>
+            Redirects JSON <span class="tag optional">optional</span>
+            <textarea id="data-packet-redirects" name="redirects" rows="4">[{"type":"1","uri":"https://www.yourreturnwebsite.com"},{"type":"2","uri":"https://api.yourpostserverendpoint.com"}]</textarea>
             <span class="help">Array of redirect objects. Type "1" = user redirect, "2" = POST callback.</span>
           </label>
         </section>

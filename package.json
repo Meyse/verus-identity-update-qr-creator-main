@@ -17,13 +17,13 @@
     "express": "^5.2.1",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
-    "verus-typescript-primitives": "git+https://github.com/VerusCoin/verus-typescript-primitives.git",
     "verusd-rpc-ts-client": "git+https://github.com/VerusCoin/verusd-rpc-ts-client.git",
     "verusid-ts-client": "git+https://github.com/VerusCoin/verusid-ts-client.git"
   },
   "packageManager": "yarn@4.12.0",
   "resolutions": {
-    "blake2b-wasm": "2.4.0"
+    "blake2b-wasm": "2.4.0",
+    "verus-typescript-primitives": "git+https://github.com/monkins1010/verus-typescript-primitives.git#5e109be91d80a269363d070b6146c730527fcb38"
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",

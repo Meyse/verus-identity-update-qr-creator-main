@@ -7,11 +7,15 @@ import {
   DataPacketRequestOrdinalVDXFObject,
   DataDescriptor,
   CompactAddressObject,
+  CompactIAddressObject,
   VerifiableSignatureData,
   URLRef,
   VdxfUniValue,
   CrossChainDataRefKey,
-  CrossChainDataRef
+  CrossChainDataRef,
+  AuthenticationRequestDetails,
+  AuthenticationRequestOrdinalVDXFObject,
+  RecipientConstraint
 } from "verus-typescript-primitives";
 import { primitives, VerusIdInterface } from "verusid-ts-client";
 import {
@@ -41,6 +45,7 @@ type GenerateDataPacketQrPayload = {
   downloadUrl?: string;
   dataHash?: string;
   signature?: unknown;
+  recipientIdentity?: string;
 };
 
 function buildFlags(payload: GenerateDataPacketQrPayload): InstanceType<typeof BN> {
@@ -219,6 +224,17 @@ function buildUrlDataDescriptor(url: string, dataHash?: string): DataDescriptor 
   return urlDescriptor;
 }
 
+function buildRecipientAuthDetails(recipientAddress: CompactIAddressObject): AuthenticationRequestOrdinalVDXFObject {
+  const recipientConstraints = new RecipientConstraint({
+    type: RecipientConstraint.REQUIRED_ID,
+    identity: recipientAddress
+  });
+  const authDetails = new AuthenticationRequestDetails({
+    recipientConstraints: [recipientConstraints]
+  });
+  return new AuthenticationRequestOrdinalVDXFObject({ data: authDetails });
+}
+
 function buildDataPacketRequest(params: {
   signingId: string;
   flags: InstanceType<typeof BN>;
@@ -227,6 +243,7 @@ function buildDataPacketRequest(params: {
   requestId?: CompactAddressObject;
   redirects?: RedirectInput[];
   signature?: VerifiableSignatureData;
+  recipientIdentity?: CompactIAddressObject;
   isTestnet?: boolean;
 }): primitives.GenericRequest {
   const detailsParams: Record<string, unknown> = {
@@ -250,8 +267,15 @@ function buildDataPacketRequest(params: {
   // Workaround: apply user-controlled flags that calcFlags() ignores
   applyUserControlledFlags(details, params.flags);
 
+  // Build details array: optionally prepend auth entry with recipient constraint
+  const detailsArray: Array<DataPacketRequestOrdinalVDXFObject | AuthenticationRequestOrdinalVDXFObject> = [];
+  if (params.recipientIdentity) {
+    detailsArray.push(buildRecipientAuthDetails(params.recipientIdentity));
+  }
+  detailsArray.push(new DataPacketRequestOrdinalVDXFObject({ data: details }));
+
   return buildGenericRequestFromDetails({
-    details: [new DataPacketRequestOrdinalVDXFObject({ data: details })],
+    details: detailsArray as any,
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
@@ -283,18 +307,26 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
       signableObjects = parseSignableObjects(payload.signableObjects);
     }
 
-    const redirects = parseJsonField<RedirectInput[]>(
-      payload.redirects,
-      "redirects",
-      true
-    );
-
-    if (!Array.isArray(redirects) || redirects.length === 0) {
-      throw new ValidationError("redirects must be a non-empty JSON array.");
+    let redirects: RedirectInput[] | undefined;
+    if (payload.redirects != null && payload.redirects !== "" && payload.redirects !== "[]") {
+      const parsed = parseJsonField<RedirectInput[]>(
+        payload.redirects,
+        "redirects",
+        true
+      );
+      if (!Array.isArray(parsed)) {
+        throw new ValidationError("redirects must be a JSON array.");
+      }
+      redirects = parsed.length > 0 ? parsed : undefined;
     }
 
     // Parse signature only if the flag is set
     const signature = payload.flagHasSignature ? parseSignature(payload.signature) : undefined;
+
+    // Parse optional recipient identity (only when FLAG_FOR_TRANSMITTAL_TO_USER)
+    const recipientIdentity = payload.flagForTransmittalToUser
+      ? parseAddress(payload.recipientIdentity, "recipientIdentity")
+      : undefined;
 
     // Validate flag consistency
     if (payload.flagHasStatements && (!statements || statements.length === 0)) {
@@ -315,6 +347,7 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
       requestId,
       redirects,
       signature,
+      recipientIdentity,
       isTestnet
     });
 
@@ -327,7 +360,27 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
       signingId
     });
 
+    // verifyGenericRequest
+    const verusId = new VerusIdInterface(
+      SYSTEM_ID_TESTNET,
+      `http://${rpcHost}:${rpcPort}`,
+      {
+        auth: {
+          username: rpcUser,
+          password: rpcPassword
+        }
+      }
+    );
+
     const deeplink = reqToSign.toWalletDeeplinkUri();
+    const back = primitives.GenericRequest.fromWalletDeeplinkUri(deeplink);
+
+    const resultok = await verusId.verifyGenericRequest(back);
+
+    if (!resultok) {
+      throw new Error("Failed to verify the generated GenericRequest.");
+    }
+
     const qrDataUrl = await QRCode.toDataURL(deeplink, {
       errorCorrectionLevel: "M",
       margin: 1,
@@ -373,6 +426,7 @@ type SignDataPacketPayload = {
   downloadUrl?: string;
   dataHash?: string;
   signature?: unknown;
+  recipientIdentity?: string;
 };
 
 export async function signDataPacket(req: Request, res: Response): Promise<void> {
@@ -421,9 +475,9 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
     }
 
     const details = new DataPacketRequestDetails(detailsParams as any);
-    
     // Workaround: apply user-controlled flags that calcFlags() ignores
     applyUserControlledFlags(details, flags);
+    console.log("Constructed DataPacketRequestDetails with flags:", details.toJson());
     
     // Get the hex of the DataPacketRequestDetails buffer
     const messageHex = details.toBuffer().toString("hex");
@@ -459,6 +513,11 @@ export async function signDataPacket(req: Request, res: Response): Promise<void>
 
     // Convert to VerifiableSignatureData using fromCLIJson
     const verifiableSignature = VerifiableSignatureData.fromCLIJson(result as any);
+    // Force testnet systemID so the embedded signature validates on VRSCTEST
+    // fromCLIJson never sets FLAG_HAS_SYSTEM, so the systemID wouldn't be serialized in the buffer.
+    // We must both set the correct address AND enable the flag so it's included in toBuffer().
+    verifiableSignature.systemID = CompactIAddressObject.fromAddress(SYSTEM_ID_TESTNET);
+    verifiableSignature.setHasSystem();
     const signatureJson = verifiableSignature.toJson();
 
     res.json({

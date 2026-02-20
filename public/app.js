@@ -1076,6 +1076,11 @@
     const signStatus = document.getElementById("data-packet-sign-status");
     const signatureResult = document.getElementById("data-packet-signature-result");
     const signatureJsonEl = document.getElementById("data-packet-signature-json");
+    const flagForTransmittalCheckbox = document.getElementById("data-packet-flag-for-transmittal");
+    const recipientToggle = document.getElementById("data-packet-recipient-toggle");
+    const addRecipientButton = document.getElementById("data-packet-add-recipient-button");
+    const recipientGroup = document.getElementById("data-packet-recipient-group");
+    const recipientIdentityInput = document.getElementById("data-packet-recipient-identity");
 
     // Track signature state
     let dataPacketSignatureData = null;
@@ -1251,6 +1256,42 @@
         toggleDatahashVisibility();
       });
     }
+
+    // Recipient toggle: show/hide the "+" button when transmittal flag changes
+    const toggleRecipientVisibility = () => {
+      const transmittalChecked = flagForTransmittalCheckbox?.checked;
+      if (recipientToggle) {
+        recipientToggle.hidden = !transmittalChecked;
+      }
+      // If transmittal unchecked, hide and clear the recipient input
+      if (!transmittalChecked) {
+        if (recipientGroup) recipientGroup.hidden = true;
+        if (recipientIdentityInput) recipientIdentityInput.value = "";
+        if (addRecipientButton) {
+          addRecipientButton.textContent = "+ Add Recipient for DataPacket";
+        }
+      }
+    };
+    if (flagForTransmittalCheckbox) {
+      flagForTransmittalCheckbox.addEventListener("change", () => {
+        toggleRecipientVisibility();
+      });
+    }
+    // "+" button toggles the recipient input group
+    if (addRecipientButton) {
+      addRecipientButton.addEventListener("click", () => {
+        const isHidden = recipientGroup?.hidden;
+        if (recipientGroup) recipientGroup.hidden = !isHidden;
+        addRecipientButton.textContent = isHidden
+          ? "- Remove Recipient"
+          : "+ Add Recipient for DataPacket";
+        // Clear input when hiding
+        if (!isHidden && recipientIdentityInput) {
+          recipientIdentityInput.value = "";
+        }
+      });
+    }
+    toggleRecipientVisibility();
     if (flagHasUrlCheckbox) {
       flagHasUrlCheckbox.addEventListener("change", () => {
         toggleConditionalFields();
@@ -1283,7 +1324,8 @@
       "data-packet-statements",
       "data-packet-request-id",
       "data-packet-download-url",
-      "data-packet-datahash"
+      "data-packet-datahash",
+      "data-packet-recipient-identity"
     ];
     inputsToWatch.forEach((id) => {
       const el = document.getElementById(id);
@@ -1434,11 +1476,7 @@
 
         const signableObjects = parseJsonField(signableObjectsText, "Signable Objects JSON", false);
         const statements = parseJsonField(statementsText, "Statements JSON", false);
-        const redirects = parseJsonField(redirectsText, "Redirects JSON", true);
-
-        if (!Array.isArray(redirects) || redirects.length === 0) {
-          throw new Error("Redirects JSON must be a non-empty array.");
-        }
+        const redirects = parseJsonField(redirectsText, "Redirects JSON", false);
 
         if (flagHasStatements && (!statements || !Array.isArray(statements) || statements.length === 0)) {
           throw new Error("Statements are required when 'Has Statements' flag is checked.");
@@ -1471,7 +1509,8 @@
           redirects,
           downloadUrl,
           dataHash,
-          signature: flagHasSignature ? dataPacketSignatureData : undefined
+          signature: flagHasSignature ? dataPacketSignatureData : undefined,
+          recipientIdentity: flagForTransmittalToUser ? (getInputValue("data-packet-recipient-identity").trim() || undefined) : undefined
         };
 
         const response = await fetch("/api/generate-data-packet-qr", {
