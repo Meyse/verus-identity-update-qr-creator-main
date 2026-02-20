@@ -64,7 +64,7 @@ export function parseAddress(value: unknown, fieldName: string): CompactIAddress
     version: CompactAddressObject.DEFAULT_VERSION,
     type: CompactAddressObject.TYPE_I_ADDRESS,
     address: trimmed,
-    rootSystemName: "VRSC"
+    rootSystemName: "VRSCTEST"
   });
 }
 

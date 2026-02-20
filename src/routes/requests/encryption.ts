@@ -72,7 +72,7 @@ function parseOptionalIAddress(value: unknown, fieldName: string): CompactIAddre
     version: CompactAddressObject.DEFAULT_VERSION,
     type: CompactAddressObject.TYPE_FQN,
     address: trimmed,
-    rootSystemName: "VRSC"
+    rootSystemName: "VRSCTEST"
   });
 
   return compactAddressObjectTemp;

@@ -65,7 +65,6 @@ function buildFlags(payload: GenerateDataPacketQrPayload): InstanceType<typeof B
     flags = flags.or(DataPacketRequestDetails.FLAG_FOR_USERS_SIGNATURE);
   }
   if (payload.flagForTransmittalToUser) {
-     console.log("Setting FLAG_FOR_TRANSMITTAL_TO_USER", payload);
     flags = flags.or(DataPacketRequestDetails.FLAG_FOR_TRANSMITTAL_TO_USER);
   }
   if (payload.flagHasUrlForDownload) {
@@ -268,6 +267,7 @@ function buildDataPacketRequest(params: {
   applyUserControlledFlags(details, params.flags);
 
   // Build details array: optionally prepend auth entry with recipient constraint
+  // IMPORTANT: the buildRecipientAuthDetails has to be before the DataPacketRequestDetails in the array, so the wallet processes the auth first and can enforce recipient constraints before showing the data packet details.
   const detailsArray: Array<DataPacketRequestOrdinalVDXFObject | AuthenticationRequestOrdinalVDXFObject> = [];
   if (params.recipientIdentity) {
     detailsArray.push(buildRecipientAuthDetails(params.recipientIdentity));
@@ -378,6 +378,7 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
     const resultok = await verusId.verifyGenericRequest(back);
 
     if (!resultok) {
+      console.log("jsons",JSON.stringify(reqToSign.toJson(), null, 2), JSON.stringify(back.toJson(), null, 2));
       throw new Error("Failed to verify the generated GenericRequest.");
     }
 
