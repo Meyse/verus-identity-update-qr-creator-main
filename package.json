@@ -7,7 +7,10 @@
   "scripts": {
     "build": "tsc",
     "main": "node dist/index.js",
-    "ui": "yarn build && node dist/server.js"
+    "ui": "yarn build && node dist/server.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@bitgo/utxo-lib": "git+https://github.com/VerusCoin/BitGoJS.git#80abaccd57652215bd5d9ebbe969ffe9c4266d25",
@@ -28,7 +31,10 @@
   "devDependencies": {
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
+    "@types/jest": "^29.5.12",
     "@types/qrcode": "^1.5.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   }
 }
