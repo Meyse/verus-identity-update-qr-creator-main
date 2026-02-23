@@ -4,7 +4,10 @@ import { BN } from "bn.js";
 import {
   UserDataRequestDetails,
   UserDataRequestOrdinalVDXFObject,
-  CompactIAddressObject
+  CompactIAddressObject,
+  AuthenticationRequestDetails,
+  AuthenticationRequestOrdinalVDXFObject,
+  RecipientConstraint
 } from "verus-typescript-primitives";
 import { primitives } from "verusid-ts-client";
 import {
@@ -33,6 +36,7 @@ type GenerateUserDataQrPayload = {
   requestedKeys?: unknown;
   requestId?: string;
   redirects?: unknown;
+  recipientIdentity?: string;
 };
 
 function parseRequestedKeys(value: unknown): string[] | undefined {
@@ -79,22 +83,34 @@ function buildSearchDataKey(keyAddress: string | undefined, keyValue: string | u
   return [{ [key]: value }];
 }
 
+function buildRecipientAuthDetails(recipientAddress: CompactIAddressObject): AuthenticationRequestOrdinalVDXFObject {
+  const recipientConstraints = new RecipientConstraint({
+    type: RecipientConstraint.REQUIRED_ID,
+    identity: recipientAddress
+  });
+  const authDetails = new AuthenticationRequestDetails({
+    recipientConstraints: [recipientConstraints]
+  });
+  return new AuthenticationRequestOrdinalVDXFObject({ data: authDetails });
+}
+
 function buildUserDataRequest(params: {
   signingId: string;
   dataType: InstanceType<typeof BN>;
   requestType: InstanceType<typeof BN>;
-  searchDataKey?: Array<{[key: string]: string}>;
+  searchDataKey: Array<{[key: string]: string}>;
   signer?: CompactIAddressObject;
   requestedKeys?: string[];
   requestId?: CompactIAddressObject;
   redirects?: RedirectInput[];
+  recipientIdentity: CompactIAddressObject;
   isTestnet?: boolean;
 }): primitives.GenericRequest {
   const detailsParams: Record<string, unknown> = {
     version: new BN(1),
     dataType: params.dataType,
     requestType: params.requestType,
-    searchDataKey: params.searchDataKey || []
+    searchDataKey: params.searchDataKey
   };
   
   if (params.signer) {
@@ -110,8 +126,14 @@ function buildUserDataRequest(params: {
   // Constructor's setFlags() will set FLAG_HAS_SIGNER, FLAG_HAS_REQUEST_ID, FLAG_HAS_REQUESTED_KEYS
   const details = new UserDataRequestDetails(detailsParams as any);
 
+  // IMPORTANT: Always prepend AuthenticationRequestOrdinalVDXFObject before UserDataRequestOrdinalVDXFObject.
+  // The wallet processes auth first to identify the user, then presents the user-data request.
+  const detailsArray: Array<UserDataRequestOrdinalVDXFObject | AuthenticationRequestOrdinalVDXFObject> = [];
+  detailsArray.push(buildRecipientAuthDetails(params.recipientIdentity));
+  detailsArray.push(new UserDataRequestOrdinalVDXFObject({ data: details }));
+
   return buildGenericRequestFromDetails({
-    details: [new UserDataRequestOrdinalVDXFObject({ data: details })],
+    details: detailsArray as any,
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
@@ -149,20 +171,37 @@ export async function generateUserDataQr(req: Request, res: Response): Promise<v
     }
     
     const searchDataKey = buildSearchDataKey(payload.searchDataKey, payload.searchDataValue);
+    if (!searchDataKey || searchDataKey.length === 0) {
+      throw new ValidationError("Search Data Key is required.");
+    }
     const signer = parseAddress(payload.signer, "signer");
     const requestedKeys = parseRequestedKeys(payload.requestedKeys);
     const requestId = parseAddress(payload.requestId, "requestId");
     
+    // Validate: requestedKeys required for PARTIAL_DATA
+    if (dataType.eq(UserDataRequestDetails.PARTIAL_DATA) && (!requestedKeys || requestedKeys.length === 0)) {
+      throw new ValidationError("Requested Keys are required when using Partial Data type.");
+    }
     // Validate: requestedKeys only makes sense with PARTIAL_DATA
     if (requestedKeys && requestedKeys.length > 0 && !dataType.eq(UserDataRequestDetails.PARTIAL_DATA)) {
       throw new ValidationError("Requested Keys can only be used with Partial Data type.");
     }
 
+    // Validate: recipientIdentity is required (the user whose data is being requested)
+    const recipientIdentity = parseAddress(payload.recipientIdentity, "recipientIdentity");
+    if (!recipientIdentity) {
+      throw new ValidationError("Recipient Identity is required — this is the VerusID whose data you are requesting.");
+    }
+
+    // Validate: redirects are required (the wallet needs somewhere to send the data back)
     const redirects = parseJsonField<RedirectInput[]>(
       payload.redirects,
       "redirects",
       false
     );
+    if (!redirects || !Array.isArray(redirects) || redirects.length === 0) {
+      throw new ValidationError("At least one redirect URI is required — the wallet needs a callback to return the data to.");
+    }
 
     const reqToSign = buildUserDataRequest({
       signingId,
@@ -172,7 +211,8 @@ export async function generateUserDataQr(req: Request, res: Response): Promise<v
       signer,
       requestedKeys,
       requestId,
-      redirects: redirects || undefined,
+      redirects,
+      recipientIdentity,
       isTestnet
     });
 

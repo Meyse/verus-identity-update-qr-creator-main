@@ -79,6 +79,42 @@ const createTestRedirects = () => [
   { type: 2, uri: "https://example.com/callback" }
 ];
 
+// ── UserDataRequestDetails fixtures ──
+
+// Valid VDXF key addresses (base58check i-addresses used as VDXF data keys)
+const VDXF_KEY_ATTESTATION_NAME = "iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1";
+const VDXF_KEY_CLAIMS_EMPLOYMENT = "i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2";
+const VDXF_KEY_IDENTITY_OVER21  = "iAXYYrZaipc4DAmAKXUFYZxavsf6uBJqaj";
+const VDXF_KEY_IDENTITY_EMAIL   = "iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23";
+const TEST_SIGNER_ID            = "iKjrTCwoPFRk44fAi2nYNbPG16ZUQjv1NB";
+const TEST_USERDATA_REQUEST_ID  = "iD4CrjbJBZmwEZQ4bCWgbHx9tBHGP9mdSQ";
+
+// Create signer CompactIAddressObject for UserDataRequestDetails
+const createTestSigner = () => new CompactIAddressObject({
+  version: CompactAddressObject.DEFAULT_VERSION,
+  type: CompactAddressObject.TYPE_I_ADDRESS,
+  address: TEST_SIGNER_ID,
+  rootSystemName: "VRSC"
+});
+
+// Create requestID CompactIAddressObject for UserDataRequestDetails
+const createUserDataRequestId = () => CompactIAddressObject.fromAddress(TEST_USERDATA_REQUEST_ID);
+
+// Single searchDataKey entry
+const createSingleSearchDataKey = (key = VDXF_KEY_ATTESTATION_NAME, value = "Attestation Name") => [{ [key]: value }];
+
+// Multiple searchDataKey entries (for COLLECTION tests)
+const createMultipleSearchDataKeys = () => [
+  { [VDXF_KEY_ATTESTATION_NAME]: "Attestation Name" },
+  { [VDXF_KEY_CLAIMS_EMPLOYMENT]: "Employment at Acme Widgets" }
+];
+
+// requestedKeys array (VDXF key addresses for PARTIAL_DATA)
+const createTestRequestedKeys = () => [
+  VDXF_KEY_IDENTITY_OVER21,
+  VDXF_KEY_IDENTITY_EMAIL
+];
+
 module.exports = {
   SYSTEM_ID_TESTNET,
   TEST_SIGNING_ID,
@@ -93,5 +129,17 @@ module.exports = {
   createSimpleDataDescriptor,
   createUrlDataDescriptor,
   createMultipleDataDescriptors,
-  createTestRedirects
+  createTestRedirects,
+  // UserData fixtures
+  VDXF_KEY_ATTESTATION_NAME,
+  VDXF_KEY_CLAIMS_EMPLOYMENT,
+  VDXF_KEY_IDENTITY_OVER21,
+  VDXF_KEY_IDENTITY_EMAIL,
+  TEST_SIGNER_ID,
+  TEST_USERDATA_REQUEST_ID,
+  createTestSigner,
+  createUserDataRequestId,
+  createSingleSearchDataKey,
+  createMultipleSearchDataKeys,
+  createTestRequestedKeys
 };

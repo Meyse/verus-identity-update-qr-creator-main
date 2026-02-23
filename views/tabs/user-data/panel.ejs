@@ -45,9 +45,9 @@
           </fieldset>
 
           <label>
-            Search Data Key <span class="tag optional">optional</span>
-            <input id="user-data-search-key" name="searchDataKey" type="text" placeholder="e.g. iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1" />
-            <span class="help">i-address of the key to search for (e.g. vrsc::attestation.name).</span>
+            Search Data Key <span class="tag required">required</span>
+            <input id="user-data-search-key" name="searchDataKey" type="text" placeholder="e.g. iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1" required />
+            <span class="help">i-address of the VDXF key to search for (e.g. vrsc::attestation.name).</span>
           </label>
 
           <label>
@@ -57,16 +57,22 @@
           </label>
 
           <label>
+            Recipient Identity <span class="tag required">required</span>
+            <input id="user-data-recipient-identity" name="recipientIdentity" type="text" placeholder="e.g. user@" required />
+            <span class="help">The VerusID of the user whose data you are requesting. The wallet will verify the scanned user matches this identity.</span>
+          </label>
+
+          <label>
             Signer <span class="tag optional">optional</span>
             <input id="user-data-signer" name="signer" type="text" placeholder="e.g. attestations@" />
-            <span class="help">VerusID of the signer who signed the data you are requesting.</span>
+            <span class="help">VerusID of the signer who signed the data you are requesting. Only data signed by this identity will be returned.</span>
           </label>
 
           <div id="user-data-requested-keys-group" hidden>
             <label>
-              Requested Keys <span class="tag optional">optional</span>
+              Requested Keys <span class="tag required">required for Partial Data</span>
               <textarea id="user-data-requested-keys" name="requestedKeys" rows="3" placeholder='["iAXYYrZaipc4DAmAKXUFYZxavsf6uBJqaj", "iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23"]'></textarea>
-              <span class="help">JSON array of i-addresses. For Partial Data, these are the keys returned as zk-proof.</span>
+              <span class="help">JSON array of VDXF key i-addresses. Only these keys will be returned as full data; all others will be MMR hashes.</span>
             </label>
           </div>
 
@@ -80,9 +86,9 @@
           </label>
 
           <label>
-            Redirects JSON <span class="tag optional">optional</span>
-            <textarea id="user-data-redirects" name="redirects" rows="4">[]</textarea>
-            <span class="help">Array of redirect objects. Type "1" = redirect, "2" = POST callback.</span>
+            Redirects JSON <span class="tag required">required</span>
+            <textarea id="user-data-redirects" name="redirects" rows="4" placeholder='[{"type":2,"uri":"https://example.com/callback"}]'></textarea>
+            <span class="help">At least one redirect URI is required. The wallet sends the user's data back to this URL. Type "1" = redirect, "2" = POST callback.</span>
           </label>
         </section>
 

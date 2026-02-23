@@ -1,13 +1,16 @@
 <aside class="split-reference">
   <div class="ref-card">
     <h3>User Data Request</h3>
-    <p class="ref-desc">Requests user-specific data stored on or associated with a VerusID.</p>
+    <p class="ref-desc">Requests user-specific data stored on or associated with a VerusID. An authentication request is automatically prepended to identify the recipient whose data is being requested.</p>
     
+    <h4>Recipient Identity (required)</h4>
+    <p class="ref-desc">The VerusID (e.g. <code>user@</code>) whose data you want to retrieve. This identity is embedded in an <code>AuthenticationRequestOrdinalVDXFObject</code> that is prepended to the request details.</p>
+
     <h4>Data Types</h4>
     <ul class="ref-list">
       <li><strong>Full Data</strong> - Returns the complete data object matching the search criteria.</li>
-      <li><strong>Partial Data</strong> - Returns a zk-proof containing only the specified Requested Keys from the matched object.</li>
-      <li><strong>Collection</strong> - Returns all data objects matching the search criteria.</li>
+      <li><strong>Partial Data</strong> - Returns a zk-proof containing only the specified Requested Keys from the matched object. <em>Requested Keys is required for this type.</em></li>
+      <li><strong>Collection</strong> - Returns all data objects matching the search criteria. Requested Keys cannot be used with this type.</li>
     </ul>
 
     <h4>Request Types</h4>
@@ -17,16 +20,20 @@
       <li><strong>Credential</strong> - A verifiable credential.</li>
     </ul>
 
-    <h4>Search Data Key</h4>
+    <h4>Search Data Key (required)</h4>
     <p class="ref-desc">The i-address of a VDXF key to search for. For example:</p>
     <ul class="ref-list">
       <li><code>iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1</code> - vrsc::attestation.name</li>
       <li><code>i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2</code> - valu.vrsc::claims.employment</li>
     </ul>
 
-    <h4>Requested Keys (Partial Data only)</h4>
+    <h4>Requested Keys (required for Partial Data)</h4>
     <p class="ref-desc">JSON array of i-addresses for keys to include in the zk-proof response. Example:</p>
     <pre class="ref-code">["iAXYYrZaipc4DAmAKXUFYZxavsf6uBJqaj", "iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23"]</pre>
+
+    <h4>Redirects (required)</h4>
+    <p class="ref-desc">At least one redirect URI must be provided so the wallet knows where to send the requested data back. Type 1 = browser redirect, Type 2 = POST callback.</p>
+    <pre class="ref-code">[{"type": 2, "uri": "https://example.com/callback"}]</pre>
 
     <h4>Examples</h4>
     <p class="ref-desc"><strong>Full Data Request:</strong> Request complete employment attestation from a specific signer.</p>

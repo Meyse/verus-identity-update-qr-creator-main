@@ -1604,7 +1604,16 @@
         const dataType = selectedDataType ? Number(selectedDataType.value) : 1;
         const requestType = selectedRequestType ? Number(selectedRequestType.value) : 1;
         
-        const searchDataKey = getInputValue("user-data-search-key").trim() || undefined;
+        const searchDataKey = getInputValue("user-data-search-key").trim();
+        if (!searchDataKey) {
+          throw new Error("Search Data Key is required. Provide the i-address of the VDXF key to search for.");
+        }
+
+        const recipientIdentity = getInputValue("user-data-recipient-identity").trim();
+        if (!recipientIdentity) {
+          throw new Error("Recipient Identity is required. Enter the VerusID (e.g. user@) whose data you want.");
+        }
+
         const searchDataValue = getInputValue("user-data-search-value").trim();
         const signer = getInputValue("user-data-signer").trim() || undefined;
         const requestedKeysText = getInputValue("user-data-requested-keys");
@@ -1614,9 +1623,16 @@
         const requestedKeys = parseJsonField(requestedKeysText, "Requested Keys JSON", false);
         const redirects = parseJsonField(redirectsText, "Redirects JSON", false);
 
-        // Validate requested keys only for Partial Data
-        if (dataType === 2 && requestedKeys && !Array.isArray(requestedKeys)) {
-          throw new Error("Requested Keys must be a JSON array of i-addresses.");
+        // Validate redirects are present
+        if (!redirects || !Array.isArray(redirects) || redirects.length === 0) {
+          throw new Error("At least one Redirect URI is required. The wallet sends the user's data back to this URL.");
+        }
+
+        // Validate requested keys for Partial Data
+        if (dataType === 2) {
+          if (!requestedKeys || !Array.isArray(requestedKeys) || requestedKeys.length === 0) {
+            throw new Error("Requested Keys are required for Partial Data. Provide a JSON array of VDXF key i-addresses.");
+          }
         }
         if (dataType !== 2 && requestedKeys && Array.isArray(requestedKeys) && requestedKeys.length > 0) {
           throw new Error("Requested Keys can only be used with Partial Data type.");
@@ -1631,7 +1647,8 @@
           signer,
           requestedKeys: dataType === 2 ? requestedKeys : undefined,
           requestId,
-          redirects
+          redirects,
+          recipientIdentity
         };
 
         const response = await fetch("/api/generate-user-data-qr", {
