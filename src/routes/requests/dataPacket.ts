@@ -338,6 +338,9 @@ export async function generateDataPacketQr(req: Request, res: Response): Promise
     if (payload.flagHasSignature && !signature) {
       throw new ValidationError("Signature is required when FLAG_HAS_SIGNATURE is set.");
     }
+    if (payload.flagForTransmittalToUser && !recipientIdentity) {
+      throw new ValidationError("Recipient Identity is required when FLAG_FOR_TRANSMITTAL_TO_USER is set.");
+    }
 
     const reqToSign = buildDataPacketRequest({
       signingId,

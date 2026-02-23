@@ -1077,8 +1077,6 @@
     const signatureResult = document.getElementById("data-packet-signature-result");
     const signatureJsonEl = document.getElementById("data-packet-signature-json");
     const flagForTransmittalCheckbox = document.getElementById("data-packet-flag-for-transmittal");
-    const recipientToggle = document.getElementById("data-packet-recipient-toggle");
-    const addRecipientButton = document.getElementById("data-packet-add-recipient-button");
     const recipientGroup = document.getElementById("data-packet-recipient-group");
     const recipientIdentityInput = document.getElementById("data-packet-recipient-identity");
 
@@ -1257,38 +1255,20 @@
       });
     }
 
-    // Recipient toggle: show/hide the "+" button when transmittal flag changes
+    // Recipient: show/hide recipient input when transmittal flag changes
     const toggleRecipientVisibility = () => {
       const transmittalChecked = flagForTransmittalCheckbox?.checked;
-      if (recipientToggle) {
-        recipientToggle.hidden = !transmittalChecked;
+      if (recipientGroup) {
+        recipientGroup.hidden = !transmittalChecked;
       }
-      // If transmittal unchecked, hide and clear the recipient input
+      // If transmittal unchecked, clear the recipient input
       if (!transmittalChecked) {
-        if (recipientGroup) recipientGroup.hidden = true;
         if (recipientIdentityInput) recipientIdentityInput.value = "";
-        if (addRecipientButton) {
-          addRecipientButton.textContent = "+ Add Recipient for DataPacket";
-        }
       }
     };
     if (flagForTransmittalCheckbox) {
       flagForTransmittalCheckbox.addEventListener("change", () => {
         toggleRecipientVisibility();
-      });
-    }
-    // "+" button toggles the recipient input group
-    if (addRecipientButton) {
-      addRecipientButton.addEventListener("click", () => {
-        const isHidden = recipientGroup?.hidden;
-        if (recipientGroup) recipientGroup.hidden = !isHidden;
-        addRecipientButton.textContent = isHidden
-          ? "- Remove Recipient"
-          : "+ Add Recipient for DataPacket";
-        // Clear input when hiding
-        if (!isHidden && recipientIdentityInput) {
-          recipientIdentityInput.value = "";
-        }
       });
     }
     toggleRecipientVisibility();
@@ -1490,7 +1470,9 @@
           throw new Error("Download URL is required when 'Has URL for Download' flag is checked.");
         }
 
-        // Validate dataHash if provided
+        if (flagForTransmittalToUser && !getInputValue("data-packet-recipient-identity").trim()) {
+          throw new Error("Recipient Identity is required when 'For Transmittal to User' flag is checked.");
+        }
         if (dataHash && !/^[0-9a-fA-F]{64}$/.test(dataHash)) {
           throw new Error("Data hash must be exactly 32 bytes (64 hex characters).");
         }
@@ -1510,7 +1492,7 @@
           downloadUrl,
           dataHash,
           signature: flagHasSignature ? dataPacketSignatureData : undefined,
-          recipientIdentity: flagForTransmittalToUser ? (getInputValue("data-packet-recipient-identity").trim() || undefined) : undefined
+          recipientIdentity: flagForTransmittalToUser ? getInputValue("data-packet-recipient-identity").trim() : undefined
         };
 
         const response = await fetch("/api/generate-data-packet-qr", {

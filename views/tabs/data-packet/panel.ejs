@@ -34,15 +34,12 @@
               <span class="help">Data intended for transmission to the user.</span>
             </label>
 
-            <div id="data-packet-recipient-toggle" hidden style="margin-left: 1.5rem; margin-top: 0.25rem;">
-              <button id="data-packet-add-recipient-button" type="button" class="small-action-button" style="font-size: 0.85em; padding: 0.25em 0.6em; cursor: pointer;">+ Add Recipient for DataPacket</button>
-              <div id="data-packet-recipient-group" hidden style="margin-top: 0.5rem;">
-                <label>
-                  Recipient Identity <span class="tag optional">optional</span>
-                  <input id="data-packet-recipient-identity" name="recipientIdentity" type="text" placeholder="e.g. johndoe@" />
-                  <span class="help">Identity that should receive this data packet (e.g. johndoe@ or an i-address). Adds a RecipientConstraint to the request.</span>
-                </label>
-              </div>
+            <div id="data-packet-recipient-group" hidden style="margin-left: 1.5rem; margin-top: 0.5rem;">
+              <label>
+                Recipient Identity <span class="tag required">required</span>
+                <input id="data-packet-recipient-identity" name="recipientIdentity" type="text" placeholder="e.g. johndoe@" />
+                <span class="help">Identity that should receive this data packet (e.g. johndoe@ or an i-address). Adds a RecipientConstraint to the request.</span>
+              </label>
             </div>
             <label class="checkbox-label">
               <input id="data-packet-flag-has-url" name="flagHasUrlForDownload" type="checkbox" />
