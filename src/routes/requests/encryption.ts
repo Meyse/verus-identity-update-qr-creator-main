@@ -4,11 +4,14 @@ import { BN } from "bn.js";
 import {
   AppEncryptionRequestDetails,
   AppEncryptionRequestOrdinalVDXFObject,
+  AuthenticationRequestDetails,
+  AuthenticationRequestOrdinalVDXFObject,
   CompactAddressObject,
   CompactIAddressObject,
-  fromBase58Check
+  fromBase58Check,
+  RecipientConstraint
 } from "verus-typescript-primitives";
-import { primitives } from "verusid-ts-client";
+import { primitives, VerusIdInterface } from "verusid-ts-client";
 import {
   ValidationError,
   RedirectInput,
@@ -16,7 +19,8 @@ import {
   parseJsonField,
   buildGenericRequestFromDetails,
   signRequest,
-  getRpcConfig
+  getRpcConfig,
+  SYSTEM_ID_TESTNET
 } from "../utils";
 
 type GenerateAppEncryptionQrPayload = {
@@ -110,10 +114,25 @@ function buildAppEncryptionRequest(params: {
     detailsParams.flags = flags;
   }
 
-  const details = new AppEncryptionRequestDetails(detailsParams as any);
+  const appEncryptDetails = new AppEncryptionRequestDetails(detailsParams as any);
+
+  // Build authentication request (required to precede AppEncryption per isValidGenericRequestDetails)
+  // Use requestId if provided, otherwise fall back to signingId for the auth requestID
+  const authRequestID = params.requestId ?? CompactIAddressObject.fromAddress(params.signingId);
+  const systemConstraint = new RecipientConstraint({
+    type: RecipientConstraint.REQUIRED_SYSTEM,
+    identity: CompactIAddressObject.fromAddress(SYSTEM_ID_TESTNET)
+  });
+  const authDetails = new AuthenticationRequestDetails({
+    requestID: authRequestID,
+    recipientConstraints: [systemConstraint]
+  });
 
   return buildGenericRequestFromDetails({
-    details: [new AppEncryptionRequestOrdinalVDXFObject({ data: details })],
+    details: [
+      new AuthenticationRequestOrdinalVDXFObject({ data: authDetails }),
+      new AppEncryptionRequestOrdinalVDXFObject({ data: appEncryptDetails })
+    ],
     signed: true,
     signingId: params.signingId,
     redirects: params.redirects
@@ -162,7 +181,29 @@ export async function generateAppEncryptionQr(req: Request, res: Response): Prom
       signingId
     });
 
+        // verifyGenericRequest
+    const verusId = new VerusIdInterface(
+      SYSTEM_ID_TESTNET,
+      `http://${rpcHost}:${rpcPort}`,
+      {
+        auth: {
+          username: rpcUser,
+          password: rpcPassword
+        }
+      }
+    );
+
     const deeplink = reqToSign.toWalletDeeplinkUri();
+
+    const back = primitives.GenericRequest.fromWalletDeeplinkUri(deeplink);
+
+    const resultok = await verusId.verifyGenericRequest(back);
+
+    if (!resultok) {
+      console.log("Verification failed. Request JSON:", JSON.stringify(reqToSign.toJson(), null, 2));
+      throw new Error("Failed to verify the generated GenericRequest.");
+    }
+
     const qrDataUrl = await QRCode.toDataURL(deeplink, {
       errorCorrectionLevel: "M",
       margin: 1,

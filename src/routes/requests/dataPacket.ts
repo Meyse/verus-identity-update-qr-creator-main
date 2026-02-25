@@ -15,7 +15,11 @@ import {
   CrossChainDataRef,
   AuthenticationRequestDetails,
   AuthenticationRequestOrdinalVDXFObject,
-  RecipientConstraint
+  RecipientConstraint,
+  MMRDescriptor,
+  SignatureData,
+  SignatureDataKey,
+  MMRDescriptorKey
 } from "verus-typescript-primitives";
 import { primitives, VerusIdInterface } from "verusid-ts-client";
 import {
@@ -573,6 +577,166 @@ export async function fetchAndHashUrl(req: Request, res: Response): Promise<void
     const status = error instanceof ValidationError ? 400 : 500;
     if (status === 500) {
       console.error("Fetch and hash URL failed:", error);
+    }
+    res.status(status).json({ error: message });
+  }
+}
+
+// ── Z-Address endpoints ────────────────────────────────────────────────
+
+export async function listZAddresses(_req: Request, res: Response): Promise<void> {
+  try {
+    const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
+    const verusId = new VerusIdInterface(
+      SYSTEM_ID_TESTNET,
+      `http://${rpcHost}:${rpcPort}`,
+      { auth: { username: rpcUser, password: rpcPassword } }
+    );
+
+    const listRes = await verusId.interface.request({
+      cmd: "z_listaddresses",
+      getParams: () => []
+    } as any);
+
+    let addresses: string[] = [];
+    if (!listRes.error && Array.isArray(listRes.result)) {
+      addresses = listRes.result;
+    }
+
+    // If no z-addresses exist, generate one automatically
+    if (addresses.length === 0) {
+      const newRes = await verusId.interface.request({
+        cmd: "z_getnewaddress",
+        getParams: () => []
+      } as any);
+      if (!newRes.error && typeof newRes.result === "string") {
+        addresses = [newRes.result];
+      }
+    }
+
+    res.json({ addresses });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected error.";
+    console.error("Failed to list z-addresses:", error);
+    res.status(500).json({ error: message });
+  }
+}
+
+// ── Create Attestation endpoint ────────────────────────────────────────
+
+type MmrDataEntry = {
+  flags?: number;
+  label: string;
+  mimetype?: string;
+  message: string;
+};
+
+type CreateAttestationPayload = {
+  signingId: string;
+  encryptToAddress: string;
+  attestationLabel: string;
+  mmrdata: MmrDataEntry[];
+};
+
+export async function createAttestation(req: Request, res: Response): Promise<void> {
+  try {
+    const payload = req.body as CreateAttestationPayload;
+    const { rpcHost, rpcPort, rpcUser, rpcPassword } = getRpcConfig();
+
+    const signingId = requireString(payload.signingId, "signingId");
+    const encryptToAddress = requireString(payload.encryptToAddress, "encryptToAddress");
+    const attestationLabel = requireString(payload.attestationLabel, "attestationLabel");
+
+    if (!Array.isArray(payload.mmrdata) || payload.mmrdata.length === 0) {
+      throw new ValidationError("mmrdata must be a non-empty array of data entries.");
+    }
+
+    // Validate each entry
+    const mmrdata = payload.mmrdata.map((entry, i) => {
+      if (!entry.label || typeof entry.label !== "string") {
+        throw new ValidationError(`mmrdata[${i}].label is required (VDXF key i-address).`);
+      }
+      if (!entry.message || typeof entry.message !== "string") {
+        throw new ValidationError(`mmrdata[${i}].message is required.`);
+      }
+      return {
+        flags: entry.flags ?? 0,
+        label: entry.label.trim(),
+        mimetype: entry.mimetype || "text/plain",
+        message: entry.message
+      };
+    });
+
+    const verusId = new VerusIdInterface(
+      SYSTEM_ID_TESTNET,
+      `http://${rpcHost}:${rpcPort}`,
+      { auth: { username: rpcUser, password: rpcPassword } }
+    );
+
+    // Call signdata with createmmr and encrypttoaddress
+    const signDataParams = {
+      address: signingId,
+      createmmr: true,
+      encrypttoaddress: encryptToAddress,
+      mmrdata: mmrdata
+    };
+
+    console.log("Calling signdata for attestation:", JSON.stringify(signDataParams, null, 2));
+
+    const sigRes = await verusId.interface.request({
+      cmd: "signdata",
+      getParams: () => [signDataParams]
+    } as any);
+
+    if (sigRes.error) {
+      throw new Error(sigRes.error.message || "RPC signdata failed.");
+    }
+
+    const result = sigRes.result as Record<string, unknown>;
+    if (!result) {
+      throw new Error("RPC signdata returned no result.");
+    }
+
+    // Extract mmrdescriptor and signaturedata from the response
+    const mmrdescriptorJson = result.mmrdescriptor as Record<string, unknown>;
+    const signaturedataJson = result.signaturedata as Record<string, unknown>;
+
+    if (!mmrdescriptorJson) {
+      throw new Error("signdata response missing mmrdescriptor.");
+    }
+    if (!signaturedataJson) {
+      throw new Error("signdata response missing signaturedata.");
+    }
+
+    // Build the DataDescriptor containing MMRDescriptor + SignatureData
+    const mmr = MMRDescriptor.fromJson(mmrdescriptorJson as any);
+    const signaturedataObj = SignatureData.fromJson(signaturedataJson as any);
+
+    const unimaps: Array<{[key: string]: any}> = [];
+    unimaps.push({ [MMRDescriptorKey.vdxfid]: mmr });
+    unimaps.push({ [SignatureDataKey.vdxfid]: signaturedataObj });
+
+    const uniValue = new VdxfUniValue({ values: unimaps });
+
+    const attestationDescriptor = DataDescriptor.fromJson({
+      version: 1,
+      label: attestationLabel,
+      objectdata: uniValue.toBuffer().toString('hex')
+    });
+
+    // Return the DataDescriptor JSON so the client can put it in the Signable Objects field
+    const descriptorJson = attestationDescriptor.toJson();
+
+    // Also return the full signdata result for reference
+    res.json({
+      signableObject: descriptorJson,
+      rawSigndataResult: result
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected error.";
+    const status = error instanceof ValidationError ? 400 : 500;
+    if (status === 500) {
+      console.error("Create attestation failed:", error);
     }
     res.status(status).json({ error: message });
   }

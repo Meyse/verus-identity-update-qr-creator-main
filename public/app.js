@@ -1272,6 +1272,188 @@
       });
     }
     toggleRecipientVisibility();
+
+    // ── Attestation Builder ──────────────────────────────────────────────
+    const attestationLabel = document.getElementById("data-packet-attestation-label");
+    const zAddressSelect = document.getElementById("data-packet-z-address");
+    const zAddressRefresh = document.getElementById("data-packet-z-address-refresh");
+    const mmrdataContainer = document.getElementById("data-packet-mmrdata-entries");
+    const mmrdataAddBtn = document.getElementById("data-packet-mmrdata-add");
+    const createAttestationBtn = document.getElementById("data-packet-create-attestation");
+    const attestationStatus = document.getElementById("data-packet-attestation-status");
+    const attestationError = document.getElementById("data-packet-attestation-error");
+
+    // Load z-addresses into dropdown
+    const loadZAddresses = async () => {
+      if (!zAddressSelect) return;
+      zAddressSelect.innerHTML = '<option value="">Loading...</option>';
+      try {
+        const resp = await fetch("/api/z-addresses");
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || "Failed to load z-addresses.");
+        const addresses = data.addresses || [];
+        if (addresses.length === 0) {
+          zAddressSelect.innerHTML = '<option value="">No z-addresses available</option>';
+        } else {
+          zAddressSelect.innerHTML = addresses.map(
+            (addr) => `<option value="${addr}">${addr}</option>`
+          ).join("");
+        }
+      } catch (err) {
+        zAddressSelect.innerHTML = '<option value="">Error loading addresses</option>';
+        console.error("Failed to load z-addresses:", err);
+      }
+    };
+    loadZAddresses();
+    if (zAddressRefresh) {
+      zAddressRefresh.addEventListener("click", loadZAddresses);
+    }
+
+    // Add MMR data entry
+    let mmrdataIndex = 1;
+    const updateRemoveButtons = () => {
+      if (!mmrdataContainer) return;
+      const entries = mmrdataContainer.querySelectorAll(".mmrdata-entry");
+      entries.forEach((entry) => {
+        const removeBtn = entry.querySelector(".mmrdata-remove");
+        if (removeBtn) removeBtn.hidden = entries.length <= 1;
+      });
+    };
+
+    if (mmrdataAddBtn && mmrdataContainer) {
+      mmrdataAddBtn.addEventListener("click", () => {
+        const entry = document.createElement("div");
+        entry.className = "mmrdata-entry";
+        entry.setAttribute("data-index", String(mmrdataIndex++));
+        entry.innerHTML = `
+          <div style="display: flex; gap: 0.5rem; align-items: flex-start; flex-wrap: wrap; margin-top: 0.5rem;">
+            <label style="flex: 1; min-width: 200px;">
+              Label (VDXF key)
+              <input class="mmrdata-label" type="text" placeholder="e.g. iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1" required />
+            </label>
+            <label style="flex: 0 0 120px;">
+              Mimetype
+              <input class="mmrdata-mimetype" type="text" value="text/plain" />
+            </label>
+            <label style="flex: 1; min-width: 200px;">
+              Message
+              <input class="mmrdata-message" type="text" placeholder="e.g. value" required />
+            </label>
+            <button type="button" class="mmrdata-remove" title="Remove entry" style="align-self: flex-end; margin-bottom: 0.25rem;">&times;</button>
+          </div>
+        `;
+        mmrdataContainer.appendChild(entry);
+        updateRemoveButtons();
+      });
+    }
+
+    // Remove MMR data entry (event delegation)
+    if (mmrdataContainer) {
+      mmrdataContainer.addEventListener("click", (e) => {
+        if (e.target && e.target.classList && e.target.classList.contains("mmrdata-remove")) {
+          e.target.closest(".mmrdata-entry").remove();
+          updateRemoveButtons();
+        }
+      });
+    }
+
+    // Create Attestation button handler
+    if (createAttestationBtn) {
+      createAttestationBtn.addEventListener("click", async () => {
+        if (attestationError) { attestationError.textContent = ""; attestationError.hidden = true; }
+        if (attestationStatus) setStatus(attestationStatus, "");
+
+        try {
+          const signingId = getGlobalSigningId();
+          if (!signingId) {
+            throw new Error("Signing ID is required (set in the global header above).");
+          }
+
+          const label = attestationLabel ? attestationLabel.value.trim() : "";
+          if (!label) {
+            throw new Error("Attestation Label is required.");
+          }
+
+          const encryptToAddress = zAddressSelect ? zAddressSelect.value : "";
+          if (!encryptToAddress) {
+            throw new Error("Select an encrypt-to z-address. Click Refresh if the list is empty.");
+          }
+
+          // Gather mmrdata entries
+          const entries = mmrdataContainer ? mmrdataContainer.querySelectorAll(".mmrdata-entry") : [];
+          if (entries.length === 0) {
+            throw new Error("At least one MMR data entry is required.");
+          }
+
+          const mmrdata = [];
+          entries.forEach((entry, i) => {
+            const labelInput = entry.querySelector(".mmrdata-label");
+            const mimetypeInput = entry.querySelector(".mmrdata-mimetype");
+            const messageInput = entry.querySelector(".mmrdata-message");
+            const entryLabel = labelInput ? labelInput.value.trim() : "";
+            const entryMimetype = mimetypeInput ? mimetypeInput.value.trim() : "text/plain";
+            const entryMessage = messageInput ? messageInput.value.trim() : "";
+
+            if (!entryLabel) throw new Error(`Entry ${i + 1}: Label (VDXF key) is required.`);
+            if (!entryMessage) throw new Error(`Entry ${i + 1}: Message is required.`);
+
+            mmrdata.push({
+              flags: 0,
+              label: entryLabel,
+              mimetype: entryMimetype || "text/plain",
+              message: entryMessage
+            });
+          });
+
+          createAttestationBtn.disabled = true;
+          if (attestationStatus) setStatus(attestationStatus, "Creating attestation...");
+
+          const response = await fetch("/api/create-attestation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              signingId,
+              encryptToAddress,
+              attestationLabel: label,
+              mmrdata
+            })
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to create attestation.");
+          }
+
+          // Put the resulting DataDescriptor into the Signable Objects field
+          if (signableObjectsTextarea) {
+            const currentText = signableObjectsTextarea.value.trim();
+            let currentArray = [];
+            if (currentText && currentText !== "[]") {
+              try {
+                const parsed = JSON.parse(currentText);
+                if (Array.isArray(parsed)) currentArray = parsed;
+              } catch (_) {
+                // If current content isn't valid JSON array, replace it entirely
+              }
+            }
+            currentArray.push(data.signableObject);
+            signableObjectsTextarea.value = JSON.stringify(currentArray, null, 2);
+          }
+
+          if (attestationStatus) setStatus(attestationStatus, "Attestation created and added to Signable Objects.");
+          setTimeout(() => { if (attestationStatus) setStatus(attestationStatus, ""); }, 4000);
+          resetSignature();
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Unexpected error.";
+          if (attestationError) { attestationError.textContent = message; attestationError.hidden = false; }
+          if (attestationStatus) setStatus(attestationStatus, "");
+        } finally {
+          createAttestationBtn.disabled = false;
+        }
+      });
+    }
+    // ── End Attestation Builder ──────────────────────────────────────────
+
     if (flagHasUrlCheckbox) {
       flagHasUrlCheckbox.addEventListener("change", () => {
         toggleConditionalFields();

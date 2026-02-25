@@ -29,6 +29,30 @@ FLAG_HAS_URL_FOR_DOWNLOAD (32)</code></pre>
   </div>
 
   <div class="ref-card">
+    <h3>Attestation Builder</h3>
+    <p class="ref-desc">Use the Attestation Builder to create a signed attestation via the daemon's <code>signdata</code> RPC. It calls <code>signdata</code> with <code>createmmr: true</code> and your chosen z-address for encryption.</p>
+    <p class="ref-desc" style="margin-top:8px;">Each MMR data entry maps a VDXF key (i-address label) to a plaintext message. Example entries:</p>
+    <div class="ref-snippet">
+<pre><code>Label: iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1
+  → vrsc::attestation.name
+  → Message: "Valu Proof of Humanity"
+
+Label: iFa41TpKfvbjaEnP78BNpSA9KYNgED58ms
+  → vrsc::attestation.identity
+  → Message: "monkins.VRSCTEST@"
+
+Label: iPzSt64gwsqmxcz3Ht7zhMngLC6no6S74K
+  → vrsc::attestation.dob
+  → Message: "1980/01/01"
+
+Label: i6E3RQUUX3jt8CkizuLX6ihZHTegCmmbj4
+  → vrsc::attestation.over21
+  → Message: "true"</code></pre>
+    </div>
+    <p class="ref-desc" style="margin-top:8px;">The result is a DataDescriptor containing an <code>MMRDescriptor</code> + <code>SignatureData</code>, wrapped in a <code>VdxfUniValue</code>. It is automatically added to the Signable Objects JSON field.</p>
+  </div>
+
+  <div class="ref-card">
     <h3>Statements</h3>
     <p class="ref-desc">Array of text statements to be signed (required when FLAG_HAS_STATEMENTS is set).</p>
     <div class="ref-snippet">

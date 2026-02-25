@@ -68,6 +68,61 @@
             </div>
           </div>
 
+          <!-- Attestation Builder -->
+          <details id="data-packet-attestation-builder" class="attestation-builder">
+            <summary>Attestation Builder</summary>
+            <div class="attestation-builder-content" style="margin-top: 0.75rem;">
+              <p class="hint">Create a signed attestation using the daemon's <code>signdata</code> RPC. The result will be placed into Signable Objects below.</p>
+
+              <label>
+                Attestation Label <span class="tag required">required</span>
+                <input id="data-packet-attestation-label" type="text" placeholder="e.g. Valu Proof of Personhood" />
+                <span class="help">A human-readable label for this attestation DataDescriptor.</span>
+              </label>
+
+              <label>
+                Encrypt-to Address (z-address) <span class="tag required">required</span>
+                <div class="input-with-action">
+                  <select id="data-packet-z-address">
+                    <option value="">Loading z-addresses...</option>
+                  </select>
+                  <button id="data-packet-z-address-refresh" type="button" title="Refresh z-addresses">Refresh</button>
+                </div>
+                <span class="help">Sapling z-address for encryption. If none exist, one will be created automatically.</span>
+              </label>
+
+              <div id="data-packet-mmrdata-entries">
+                <label style="margin-bottom: 0.25rem;">MMR Data Entries <span class="tag required">at least 1</span></label>
+                <span class="help" style="display:block; margin-bottom: 0.5rem;">Each entry has a VDXF key label (i-address), mimetype, and message value.</span>
+
+                <div class="mmrdata-entry" data-index="0">
+                  <div style="display: flex; gap: 0.5rem; align-items: flex-start; flex-wrap: wrap;">
+                    <label style="flex: 1; min-width: 200px;">
+                      Label (VDXF key)
+                      <input class="mmrdata-label" type="text" placeholder="e.g. iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1" required />
+                    </label>
+                    <label style="flex: 0 0 120px;">
+                      Mimetype
+                      <input class="mmrdata-mimetype" type="text" value="text/plain" />
+                    </label>
+                    <label style="flex: 1; min-width: 200px;">
+                      Message
+                      <input class="mmrdata-message" type="text" placeholder="e.g. Valu Proof of Humanity" required />
+                    </label>
+                    <button type="button" class="mmrdata-remove" title="Remove entry" style="align-self: flex-end; margin-bottom: 0.25rem;" hidden>&times;</button>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button id="data-packet-mmrdata-add" type="button">+ Add Entry</button>
+                <button id="data-packet-create-attestation" type="button" style="font-weight: bold;">Create Attestation</button>
+              </div>
+              <span id="data-packet-attestation-status" class="status" aria-live="polite"></span>
+              <div id="data-packet-attestation-error" class="error" hidden></div>
+            </div>
+          </details>
+
           <label id="data-packet-signable-objects-label">
             Signable Objects JSON <span id="data-packet-signable-objects-tag" class="tag optional">optional</span>
             <textarea id="data-packet-signable-objects" name="signableObjects" rows="6">[{"version": 1, "label": "example", "objectdata": "0011223344", "flags": 32}]</textarea>
