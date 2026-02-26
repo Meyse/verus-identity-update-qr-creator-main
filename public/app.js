@@ -1021,6 +1021,11 @@
         qrImage.src = data.qrDataUrl;
         qrImage.alt = "QR Code for app encryption request";
         deeplinkEl.value = data.deeplink;
+        // Display parsed GenericRequest JSON
+        const parsedJsonEl = document.getElementById("app-encryption-parsed-json");
+        if (parsedJsonEl && data.parsedRequest) {
+          parsedJsonEl.textContent = JSON.stringify(data.parsedRequest, null, 2);
+        }
         resultEl.hidden = false;
         setStatus(statusEl, "QR generated.");
       } catch (error) {

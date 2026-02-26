@@ -9,7 +9,8 @@ import {
   CompactAddressObject,
   CompactIAddressObject,
   fromBase58Check,
-  RecipientConstraint
+  RecipientConstraint,
+  SaplingPaymentAddress
 } from "verus-typescript-primitives";
 import { primitives, VerusIdInterface } from "verusid-ts-client";
 import {
@@ -33,7 +34,7 @@ type GenerateAppEncryptionQrPayload = {
   redirects?: unknown;
 };
 
-function parseOptionalZAddress(value: unknown, fieldName: string): string | undefined {
+function parseOptionalZAddress(value: unknown, fieldName: string): SaplingPaymentAddress | undefined {
   if (value == null || value === "") return undefined;
   if (typeof value !== "string") {
     throw new ValidationError(`${fieldName} must be a string.`);
@@ -42,7 +43,10 @@ function parseOptionalZAddress(value: unknown, fieldName: string): string | unde
   if (!trimmed.startsWith("zs1")) {
     throw new ValidationError(`${fieldName} must be a valid z-address (starts with zs1).`);
   }
-  return trimmed;
+
+  const retval = SaplingPaymentAddress.fromAddressString(trimmed);
+
+  return retval;
 }
 
 function parseDerivationNumber(value: unknown) {
@@ -63,28 +67,34 @@ function parseOptionalIAddress(value: unknown, fieldName: string): CompactIAddre
   }
   const trimmed = value.trim();
 
-  if (!trimmed.endsWith("@"))  {
-    try {
-      // Try parsing as i-address to validate format
-      fromBase58Check(trimmed);
-    } catch (error) {
-      throw new ValidationError(`${fieldName} must be a valid i-address or fully qualified name.`);
-    }
+  // If ends with @, it's a fully qualified name
+  if (trimmed.endsWith("@")) {
+    return new CompactIAddressObject({
+      version: CompactAddressObject.DEFAULT_VERSION,
+      type: CompactAddressObject.TYPE_FQN,
+      address: trimmed,
+      rootSystemName: "VRSCTEST"
+    });
   }
 
-  const compactAddressObjectTemp = new CompactIAddressObject({
+  // Otherwise validate as i-address
+  try {
+    fromBase58Check(trimmed);
+  } catch (error) {
+    throw new ValidationError(`${fieldName} must be a valid i-address or fully qualified name.`);
+  }
+
+  return new CompactIAddressObject({
     version: CompactAddressObject.DEFAULT_VERSION,
-    type: CompactAddressObject.TYPE_FQN,
+    type: CompactAddressObject.TYPE_I_ADDRESS,
     address: trimmed,
     rootSystemName: "VRSCTEST"
   });
-
-  return compactAddressObjectTemp;
 }
 
 function buildAppEncryptionRequest(params: {
   signingId: string;
-  encryptToZAddress?: string;
+  encryptResponseToAddress?: SaplingPaymentAddress;
   derivationNumber: InstanceType<typeof BN>;
   derivationID?: CompactIAddressObject;
   requestId?: CompactIAddressObject;
@@ -101,8 +111,8 @@ function buildAppEncryptionRequest(params: {
   const detailsParams: Record<string, unknown> = {
     derivationNumber: params.derivationNumber
   };
-  if (params.encryptToZAddress) {
-    detailsParams.encryptToZAddress = params.encryptToZAddress;
+  if (params.encryptResponseToAddress) {
+    detailsParams.encryptResponseToAddress = params.encryptResponseToAddress;
   }
   if (params.derivationID) {
     detailsParams.derivationID = params.derivationID;
@@ -117,8 +127,23 @@ function buildAppEncryptionRequest(params: {
   const appEncryptDetails = new AppEncryptionRequestDetails(detailsParams as any);
 
   // Build authentication request (required to precede AppEncryption per isValidGenericRequestDetails)
-  // Use requestId if provided, otherwise fall back to signingId for the auth requestID
-  const authRequestID = params.requestId ?? CompactIAddressObject.fromAddress(params.signingId);
+  // Use requestId if provided, otherwise create a CompactIAddressObject from the signingId
+  let authRequestID: CompactIAddressObject;
+  if (params.requestId) {
+    authRequestID = params.requestId;
+  } else {
+    // signingId could be FQN (name@) or i-address
+    if (params.signingId.endsWith("@")) {
+      authRequestID = new CompactIAddressObject({
+        version: CompactAddressObject.DEFAULT_VERSION,
+        type: CompactAddressObject.TYPE_FQN,
+        address: params.signingId,
+        rootSystemName: "VRSCTEST"
+      });
+    } else {
+      authRequestID = CompactIAddressObject.fromAddress(params.signingId);
+    }
+  }
   const systemConstraint = new RecipientConstraint({
     type: RecipientConstraint.REQUIRED_SYSTEM,
     identity: CompactIAddressObject.fromAddress(SYSTEM_ID_TESTNET)
@@ -145,7 +170,7 @@ export async function generateAppEncryptionQr(req: Request, res: Response): Prom
     const { rpcHost, rpcPort, rpcUser, rpcPassword, isTestnet } = getRpcConfig();
     const signingId = requireString(payload.signingId, "signingId");
     
-    const encryptToZAddress = parseOptionalZAddress(payload.encryptToZAddress, "encryptToZAddress");
+    const encryptResponseToAddress = parseOptionalZAddress(payload.encryptToZAddress, "encryptToZAddress");
     const derivationNumber = parseDerivationNumber(payload.derivationNumber);
     const derivationID = parseOptionalIAddress(payload.derivationID, "derivationID");
     const requestId = parseOptionalIAddress(payload.requestId, "requestId");
@@ -163,7 +188,7 @@ export async function generateAppEncryptionQr(req: Request, res: Response): Prom
 
     const reqToSign = buildAppEncryptionRequest({
       signingId,
-      encryptToZAddress,
+      encryptResponseToAddress,
       derivationNumber,
       derivationID,
       requestId,
@@ -210,7 +235,10 @@ export async function generateAppEncryptionQr(req: Request, res: Response): Prom
       scale: 6
     });
 
-    res.json({ deeplink, qrDataUrl });
+    // Parse the deeplink back to get the GenericRequest JSON for display
+    const parsedRequest = back.toJson();
+
+    res.json({ deeplink, qrDataUrl, parsedRequest });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error.";
     const status = error instanceof ValidationError ? 400 : 500;

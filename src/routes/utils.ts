@@ -151,9 +151,21 @@ export function buildGenericRequestFromDetails(params: {
     if (!params.signingId) {
       throw new ValidationError("signingId is required when signed is true.");
     }
+    // signingId could be FQN (name@) or i-address
+    let identityID: CompactIAddressObject;
+    if (params.signingId.endsWith("@")) {
+      identityID = new CompactIAddressObject({
+        version: CompactAddressObject.DEFAULT_VERSION,
+        type: CompactAddressObject.TYPE_FQN,
+        address: params.signingId,
+        rootSystemName: "VRSCTEST"
+      });
+    } else {
+      identityID = CompactIAddressObject.fromAddress(params.signingId);
+    }
     req.signature = new VerifiableSignatureData({
       systemID: CompactIAddressObject.fromAddress(SYSTEM_ID_TESTNET),
-      identityID: CompactIAddressObject.fromAddress(params.signingId)
+      identityID
     });
     req.setSigned();
   }
@@ -190,7 +202,12 @@ export async function signRequest(params: {
 
   const signature = sigRes?.result?.signature;
   if (typeof signature !== "string" || signature.length === 0) {
-    throw new Error("RPC signData returned no signature.");
+    // Check for RPC error details
+    const rpcError = sigRes?.error;
+    if (rpcError) {
+      throw new Error(`RPC signData failed: ${rpcError.message || JSON.stringify(rpcError)}`);
+    }
+    throw new Error(`RPC signData returned no signature. Make sure the Signing ID "${params.signingId}" exists in your wallet and you have the private key to sign.`);
   }
 
   if (!params.request.signature) {
