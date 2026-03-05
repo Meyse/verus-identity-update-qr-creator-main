@@ -15,11 +15,24 @@
     );
   }
 
+    const constraint = new RecipientConstraint({
+        type: RecipientConstraint.REQUIRED_SYSTEM,
+        identity: new CompactIAddressObject({
+          type: CompactAddressObject.TYPE_FQN,
+          address: "vrsctest@",
+          rootSystemName: "VRSCTEST"
+        })
+      });
 
-    const req = await createSignedRequest([
-      new IdentityUpdateResponseOrdinalVDXFObject({ data: TEST_ID_UPDATE_RESPONSE_DETAILS }),
-      new AuthenticationRequestOrdinalVDXFObject()
-    ]);
+    const details = new AuthenticationRequestDetails({
+        flags: AuthenticationRequestDetails.FLAG_HAS_RECIPIENT_CONSTRAINTS,
+        recipientConstraints: [constraint]
+      });
+
+    const ordinal = new AuthenticationRequestOrdinalVDXFObject({ data: details });
+
+
+    const req = await createSignedRequest([ordinal]);
 
     const ok = await VerusId.verifyGenericRequest(
       req,
