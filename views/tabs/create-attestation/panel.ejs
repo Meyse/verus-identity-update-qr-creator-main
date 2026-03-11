@@ -1,0 +1,242 @@
+<section class="tab-panel" data-tab-panel="create-attestation" hidden>
+  <div class="split-layout">
+    <div class="split-inputs">
+      <form id="create-attestation-form">
+        <section class="card">
+          <h2>Create Attestation</h2>
+          <p class="hint">Create a signed attestation and generate a Data Packet QR for transmittal to a user. Flags: Has Request ID, For Transmittal to User, Has URL for Download. The attestation signature is included in the data downloaded from the URL.</p>
+
+          <!-- Recipient Identity -->
+          <label>
+            Recipient Identity <span class="tag required">required</span>
+            <input id="ca-recipient-identity" name="recipientIdentity" type="text" placeholder="e.g. johndoe@ or i-address" />
+            <span class="help">The VerusID that should receive this attestation (e.g. johndoe@ or an i-address).</span>
+          </label>
+
+          <!-- Attestation Label -->
+          <label>
+            Attestation Label <span class="tag required">required</span>
+            <input id="ca-attestation-label" type="text" value="Identity Attestation" placeholder="e.g. Valu Proof of Personhood" />
+            <span class="help">A human-readable label for this attestation.</span>
+          </label>
+
+          <!-- Encrypt-to z-address -->
+          <label>
+            Encrypt-to Address (z-address) <span class="tag required">required</span>
+            <div class="input-with-action">
+              <select id="ca-z-address">
+                <option value="">Loading z-addresses...</option>
+              </select>
+              <button id="ca-z-address-refresh" type="button" title="Refresh z-addresses">Refresh</button>
+            </div>
+            <span class="help">Sapling z-address for encryption. If none exist, one will be created automatically.</span>
+          </label>
+
+          <!-- Default Identity Fields -->
+          <fieldset class="flags-group">
+            <legend>Identity Fields</legend>
+
+            <div class="ca-field-entry" data-vdxf-key="iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1">
+              <label>
+                Attestation Name
+                <input class="ca-field-value" type="text" placeholder="e.g. Proof of Identity" />
+                <span class="help">ATTESTATION_NAME</span>
+              </label>
+            </div>
+
+            <div class="ca-field-entry" data-vdxf-key="iFNc5DG22Btm69wBDDXatvSPLxzJq53QBa">
+              <label>
+                Attestor <span class="tag">auto-filled from Signing ID</span>
+                <input id="ca-field-attestor" class="ca-field-value" type="text" placeholder="Auto-filled from Signing ID" readonly />
+                <span class="help">IDENTITY_ATTESTOR — automatically set to the Signing Identity.</span>
+              </label>
+            </div>
+
+            <div class="ca-field-entry" data-vdxf-key="iAkd3VBhYQ3MK6PUCtfhXrLVNbqSghxxpn">
+              <label>
+                Attestation Recipient <span class="tag">auto-filled from Recipient</span>
+                <input id="ca-field-recipient" class="ca-field-value" type="text" placeholder="Auto-filled from Recipient Identity" readonly />
+                <span class="help">IDENTITY_ATTESTATION_RECIPIENT — automatically set to the Recipient Identity above.</span>
+              </label>
+            </div>
+
+            <div class="ca-field-entry" data-vdxf-key="iSZsa7C4esogN3W6fBngUHR6GvSmt7We4j">
+              <label>
+                Date of Birth
+                <input class="ca-field-value" type="text" placeholder="e.g. 1990/01/15" />
+                <span class="help">IDENTITY_DATEOFBIRTH</span>
+              </label>
+            </div>
+
+            <div class="ca-field-entry" data-vdxf-key="iAXYYrZaipc4DAmAKXUFYZxavsf6uBJqaj">
+              <label>
+                Over 21
+                <input class="ca-field-value" type="text" placeholder="true or false" />
+                <span class="help">IDENTITY_OVER21</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Additional Fields Dropdown -->
+          <fieldset class="flags-group">
+            <legend>Additional Fields</legend>
+            <div class="input-with-action">
+              <select id="ca-extra-field-select">
+                <option value="">-- Select a field to add --</option>
+                <option value="iLB8SG7ErJtTYcG1f4w9RLuMJPpAsjFkiL">First Name (IDENTITY_FIRSTNAME)</option>
+                <option value="iKRmfy4xgjWQyPdXYie6dJezRXF4aKdbHB">Last Name (IDENTITY_LASTNAME)</option>
+                <option value="iHG6ALRUPyRcgJMsPqBmvUCZxe4PrMfgej">Middle Name (IDENTITY_MIDDLENAME)</option>
+                <option value="iHPD8vB7jhtbuqPkUqzheqcZdfAfHUFVzM">Over 18 (IDENTITY_OVER18)</option>
+                <option value="iDuForPTZFeFBAgDX1HyrP3d6of7wzrRaS">Over 25 (IDENTITY_OVER25)</option>
+                <option value="iShgSBdiYDQnVwgNcDnSbNYHGU6CTwBDb1">Gender (IDENTITY_GENDER)</option>
+                <option value="iLmLmsFMTUm4dd2iMuMe4xaMC8VSZN9soP">Height (IDENTITY_HEIGHT)</option>
+                <option value="iRo2XT8tcMtLTpuPJ6V5WxbnVWa2CrcdsJ">Eye Color (IDENTITY_EYECOLOR)</option>
+                <option value="iAQY8o4HwupzcJAw9aBtFwgrvWZGQStkge">Phone Number (IDENTITY_PHONENUMBER)</option>
+                <option value="iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23">Email (IDENTITY_EMAIL)</option>
+                <option value="iEUYNTkw6kFhZWto7vyTpQqtdRL7eoKZY2">Nationality (IDENTITY_NATIONALITY)</option>
+                <option value="i9jHPJokwnLoCQ83P6jqezCcEZUD1g34B9">Ethnicity (IDENTITY_ETHNICITY)</option>
+                <option value="iMzGK44r6SNkzi3N3AmcZBtuysPvgYiRiT">Weight (IDENTITY_WEIGHT)</option>
+                <option value="i9A1fD5sVwFFXzEmCJWSRDqN94PXp9oNaS">Home Address (IDENTITY_HOMEADDRESS)</option>
+                <option value="i5BJAwQbrP4Bht8gUpoqSrovuBwfRc6jiv">Home Address Street1 (IDENTITY_HOMEADDRESS_STREET1)</option>
+                <option value="iMx71C14hrBoWD3yyhYChmhJEw4Kqw1zj4">Home Address Street2 (IDENTITY_HOMEADDRESS_STREET2)</option>
+                <option value="i75ZpW5T6wgQEMVxyvqHT9ZaV4fjsQ7kws">Home Address City (IDENTITY_HOMEADDRESS_CITY)</option>
+                <option value="iRkYck3JowdFWmrM6VUAS8Wtpmxds2fLXS">Home Address Region (IDENTITY_HOMEADDRESS_REGION)</option>
+                <option value="iAL2FRG8PVi18fN8MatjXhV1YkuZr7PM4T">Home Address Postcode (IDENTITY_HOMEADDRESS_POSTCODE)</option>
+                <option value="iABYGvas6uUDk9ejCkfCVLvE9PPJXgyCKX">Home Address Country (IDENTITY_HOMEADDRESS_COUNTRY)</option>
+                <option value="iQrnvbCNWMaG6PjTmeXzrcuAXKsMzmNJWA">ID Number Value (IDENTITY_IDNUMBER_VALUE)</option>
+                <option value="iSSZX5yUdQh7zLf1gUewH5rVfbXtSq2c4s">ID Number Type (IDENTITY_IDNUMBER_TYPE)</option>
+                <option value="i5Xgd7Aqds922eE8FDBUsKHSgiig39AnfS">Account ID (IDENTITY_ACCOUNT_ID)</option>
+                <option value="iNKVUvr5GzdCHgybMauK11DdZZUyWE3pe3">Account UserID (IDENTITY_ACCOUNT_USERID)</option>
+                <option value="i42uTbJmVBcPacY3Ak1g95LBg5rBBntQby">Account Created At (IDENTITY_ACCOUNT_CREATEDAT)</option>
+                <option value="iRJTZj7osY5EYA7pd7K3UcJVAApkvodDjZ">Account Completed At (IDENTITY_ACCOUNT_COMPLETEDAT)</option>
+                <option value="iGU6RCWyjU1sscCPLN77XhTESJ21JCTNxF">Account Previous Attempt ID (IDENTITY_ACCOUNT_PREVIOUSATTEMPTID)</option>
+                <option value="i92YkV3FVGZfp5Ep3j1sfQUgqUS37M9v82">Account Shareable URL (IDENTITY_ACCOUNT_SHAREABLEURL)</option>
+                <option value="iL5diuVsHAG5DLVeyc8XYdEXR6fFro5G7s">Account Template ID (IDENTITY_ACCOUNT_TEMPLATEID)</option>
+                <option value="i7eBZNzKrgFov6c2Sx2QecyEmPq2Mc4BGe">Account Template Version (IDENTITY_ACCOUNT_TEMPLATEVERSION)</option>
+                <option value="iJf3EbihEtdEpJjbQ6PgUaL3GxDgZRzSWk">Account Status (IDENTITY_ACCOUNT_STATUS)</option>
+                <option value="i8MhqW3ejupmV1M5UyhyhG13dkS8A7g7zg">Verification Status (IDENTITY_VERIFICATION_STATUS)</option>
+                <option value="i8SSgM1z7XVoCtoP9CCsMms3zCndaNjtCe">Personal Details (IDENTITY_PERSONALDETAILS)</option>
+                <option value="iRLT8V9NN178CvZQusJSHuyuFC2fD2QmE3">Contact Details (IDENTITY_CONTACTDETAILS)</option>
+                <option value="iGmiLZ7J6GjxjZ4rkSMsDzyyvWtmMBjnbo">Location (IDENTITY_LOCATION)</option>
+                <option value="i8DUrZJJRjNQMJNeJ3Ti6pbpKPJ55LECyJ">Banking Details (IDENTITY_BANKINGDETAILS)</option>
+                <option value="iCm3ERZoUw2ze1P11QyRUtvhKYovCWFXbT">Documents (IDENTITY_DOCUMENTS)</option>
+                <option value="i4uE1EvnDbq9WGhF5UbBr6fbxNLsgk1eZ3">Requesting IP Address (IDENTITY_ACCOUNT_REQUESTING_IPADDRESS)</option>
+              </select>
+              <button id="ca-add-extra-field" type="button">Add Field</button>
+            </div>
+            <span class="help">Select additional identity fields to include in the attestation.</span>
+
+            <div id="ca-extra-fields-container" style="margin-top: 0.75rem;"></div>
+          </fieldset>
+
+          <!-- Attestation Builder Button -->
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; align-items: center;">
+            <button id="ca-create-attestation-btn" type="button" style="font-weight: bold;">Create Attestation</button>
+            <span id="ca-attestation-status" class="status" aria-live="polite"></span>
+          </div>
+          <div id="ca-attestation-error" class="error" hidden></div>
+
+          <!-- Signable Objects (auto-populated, readonly) -->
+          <label style="margin-top: 1rem;">
+            Signable Objects JSON <span class="tag">auto-generated</span>
+            <textarea id="ca-signable-objects" name="signableObjects" rows="6" readonly>[]</textarea>
+            <span class="help">Auto-populated after creating the attestation. Contains the attestation DataDescriptor.</span>
+          </label>
+
+          <!-- Pastebin Data Section (shown after Create Attestation) -->
+          <section id="ca-pastebin-data-section" class="card" hidden style="margin-top: 1rem; border: 1px solid #444;">
+            <h3>Pastebin Upload Data</h3>
+            <p class="hint">This is the data that must be hosted at the Download URL. Copy the hex and paste to <a href="https://pastebin.com" target="_blank">pastebin.com</a> (raw paste). Then use that raw URL below.</p>
+
+            <label>
+              Pastebin Data JSON (for verification)
+              <pre id="ca-pastebin-json" style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow: auto; max-height: 300px; font-size: 0.85em; font-weight: normal; white-space: pre-wrap; word-break: break-all;"></pre>
+            </label>
+
+            <label>
+              Pastebin Hex Data
+              <textarea id="ca-pastebin-hex" rows="6" readonly style="font-family: monospace; font-size: 0.85em; word-break: break-all;"></textarea>
+            </label>
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem;">
+              <button id="ca-copy-pastebin-hex" type="button">Copy Hex Data</button>
+            </div>
+
+            <label style="margin-top: 0.75rem;">
+              SHA256 Hash of Hex Data <span class="tag">auto-generated</span>
+              <div class="input-with-action">
+                <input id="ca-pastebin-hash" type="text" readonly style="font-family: monospace; font-size: 0.85em;" />
+                <button id="ca-copy-pastebin-hash" type="button">Copy Hash</button>
+              </div>
+              <span class="help">SHA256 hash of the serialized buffer. This should match the Data Hash field once the data is uploaded and fetched.</span>
+            </label>
+          </section>
+
+          <!-- Download URL -->
+          <label>
+            Download URL <span class="tag required">required</span>
+            <input id="ca-download-url" name="downloadUrl" type="url" placeholder="https://pastebin.com/raw/XXXXX" />
+            <span class="help">URL where the attestation data will be hosted (e.g. a Pastebin raw URL). Upload the hex from "Upload Data" section below.</span>
+          </label>
+
+          <!-- Data Hash -->
+          <label>
+            Data Hash
+            <div class="input-with-action">
+              <input id="ca-datahash" name="dataHash" type="text" placeholder="64 hex characters (32 bytes)" maxlength="64" pattern="[0-9a-fA-F]{64}" />
+              <button id="ca-fetch-hash-btn" type="button">Fetch &amp; Hash</button>
+            </div>
+            <span id="ca-fetch-hash-status" class="status" aria-live="polite"></span>
+            <span class="help">SHA256 hash of the data at the URL. Click "Fetch &amp; Hash" to auto-populate after uploading to pastebin.</span>
+          </label>
+          <div id="ca-fetch-hash-error" class="error" hidden></div>
+
+          <!-- Request ID (auto-generated) -->
+          <label>
+            Request ID <span class="tag">auto-generated</span>
+            <div class="input-with-action">
+              <input id="ca-request-id" name="requestId" type="text" placeholder="Auto-generated i-address" />
+              <button id="ca-request-id-generate" type="button">Regenerate</button>
+            </div>
+            <span class="help">Unique request identifier. Auto-generated on page load.</span>
+          </label>
+
+          <!-- Redirects -->
+          <label>
+            Redirects JSON <span class="tag optional">optional</span>
+            <textarea id="ca-redirects" name="redirects" rows="4">[{"type":"1","uri":"https://www.yourreturnwebsite.com"}]</textarea>
+            <span class="help">Array of redirect objects. Type "1" = user redirect, "2" = POST callback.</span>
+          </label>
+        </section>
+
+        <div class="actions">
+          <button id="ca-submit-btn" type="submit">Generate QR</button>
+          <span id="ca-status" class="status" aria-live="polite"></span>
+        </div>
+        <div id="ca-error" class="error" hidden></div>
+      </form>
+
+      <!-- Result Section -->
+      <section id="ca-result" class="card" hidden>
+        <h2>Result</h2>
+        <div class="result-grid">
+          <div class="qr-wrapper">
+            <img id="ca-qr-image" alt="QR Code" />
+          </div>
+          <div class="result-details">
+            <label>
+              Deeplink URI
+              <textarea id="ca-deeplink" rows="6" readonly></textarea>
+            </label>
+            <button id="ca-copy-btn" type="button">Copy deeplink</button>
+          </div>
+        </div>
+        <label>
+          Parsed GenericRequest JSON
+          <pre id="ca-parsed-json" style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow: auto; max-height: 400px; font-size: 0.85em; font-weight: normal;"></pre>
+        </label>
+      </section>
+    </div>
+
+    <%- include('./reference') %>
+  </div>
+</section>

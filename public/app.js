@@ -1740,6 +1740,7 @@
     const requestIdInput = document.getElementById("user-data-request-id");
     const requestIdGenerateButton = document.getElementById("user-data-request-id-generate");
     const requestedKeysGroup = document.getElementById("user-data-requested-keys-group");
+    const parsedJsonEl = document.getElementById("user-data-parsed-json");
 
     if (
       !form ||
@@ -1854,6 +1855,9 @@
         qrImage.src = data.qrDataUrl;
         qrImage.alt = "QR Code for user data request";
         deeplinkEl.value = data.deeplink;
+        if (parsedJsonEl) {
+          parsedJsonEl.textContent = JSON.stringify(data.parsedRequest, null, 2);
+        }
         resultEl.hidden = false;
         setStatus(statusEl, "QR generated.");
       } catch (error) {
@@ -1877,6 +1881,439 @@
     });
   };
 
+  // ── Create Attestation Tab ────────────────────────────────────────────
+
+  const setupCreateAttestationForm = () => {
+    const form = document.getElementById("create-attestation-form");
+    const statusEl = document.getElementById("ca-status");
+    const errorEl = document.getElementById("ca-error");
+    const resultEl = document.getElementById("ca-result");
+    const qrImage = document.getElementById("ca-qr-image");
+    const deeplinkEl = document.getElementById("ca-deeplink");
+    const copyButton = document.getElementById("ca-copy-btn");
+    const submitButton = document.getElementById("ca-submit-btn");
+    const requestIdInput = document.getElementById("ca-request-id");
+    const requestIdGenerateButton = document.getElementById("ca-request-id-generate");
+    const recipientIdentityInput = document.getElementById("ca-recipient-identity");
+    const attestationLabelInput = document.getElementById("ca-attestation-label");
+    const zAddressSelect = document.getElementById("ca-z-address");
+    const zAddressRefresh = document.getElementById("ca-z-address-refresh");
+    const signableObjectsTextarea = document.getElementById("ca-signable-objects");
+    const downloadUrlInput = document.getElementById("ca-download-url");
+    const datahashInput = document.getElementById("ca-datahash");
+    const fetchHashButton = document.getElementById("ca-fetch-hash-btn");
+    const fetchHashStatus = document.getElementById("ca-fetch-hash-status");
+    const fetchHashError = document.getElementById("ca-fetch-hash-error");
+    const createAttestationBtn = document.getElementById("ca-create-attestation-btn");
+    const attestationStatus = document.getElementById("ca-attestation-status");
+    const attestationError = document.getElementById("ca-attestation-error");
+    const extraFieldSelect = document.getElementById("ca-extra-field-select");
+    const addExtraFieldBtn = document.getElementById("ca-add-extra-field");
+    const extraFieldsContainer = document.getElementById("ca-extra-fields-container");
+    // Pastebin data display elements
+    const pastebinDataSection = document.getElementById("ca-pastebin-data-section");
+    const pastebinJsonEl = document.getElementById("ca-pastebin-json");
+    const pastebinHexEl = document.getElementById("ca-pastebin-hex");
+    const pastebinHashEl = document.getElementById("ca-pastebin-hash");
+    const copyPastebinHexBtn = document.getElementById("ca-copy-pastebin-hex");
+    const copyPastebinHashBtn = document.getElementById("ca-copy-pastebin-hash");
+
+
+    if (!form || !statusEl || !errorEl || !resultEl || !qrImage || !deeplinkEl || !copyButton || !submitButton) {
+      return;
+    }
+
+    // Auto-generate request ID on load
+    const autoGenerateRequestId = async () => {
+      if (requestIdInput && !requestIdInput.value.trim()) {
+        try {
+          requestIdInput.value = await generateRequestId();
+        } catch (e) {
+          console.error("Failed to auto-generate request ID:", e);
+        }
+      }
+    };
+    autoGenerateRequestId();
+
+    // Setup request ID regeneration
+    setupRequestIdGenerator(requestIdInput, requestIdGenerateButton, statusEl, errorEl);
+
+    // Load z-addresses
+    const loadZAddresses = async () => {
+      if (!zAddressSelect) return;
+      zAddressSelect.innerHTML = '<option value="">Loading...</option>';
+      try {
+        const resp = await fetch("/api/z-addresses");
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || "Failed to load z-addresses.");
+        const addresses = data.addresses || [];
+        if (addresses.length === 0) {
+          zAddressSelect.innerHTML = '<option value="">No z-addresses available</option>';
+        } else {
+          zAddressSelect.innerHTML = addresses.map(
+            (addr) => `<option value="${addr}">${addr}</option>`
+          ).join("");
+        }
+      } catch (err) {
+        zAddressSelect.innerHTML = '<option value="">Error loading addresses</option>';
+        console.error("Failed to load z-addresses:", err);
+      }
+    };
+    loadZAddresses();
+    if (zAddressRefresh) {
+      zAddressRefresh.addEventListener("click", loadZAddresses);
+    }
+
+    // Auto-fill Attestor (from global Signing ID) and Recipient fields
+    const caFieldAttestor = document.getElementById("ca-field-attestor");
+    const caFieldRecipient = document.getElementById("ca-field-recipient");
+    const globalSigningIdSelect = document.getElementById("global-signing-id-select");
+    const globalSigningIdInput = document.getElementById("global-signing-id");
+
+    const getSigningIdFullyQualifiedName = () => {
+      if (globalSigningIdSelect && globalSigningIdSelect.value) {
+        const selectedOption = globalSigningIdSelect.options[globalSigningIdSelect.selectedIndex];
+        if (selectedOption && selectedOption.textContent) {
+          // Option text is "name@ (iAddress)" — extract the "name@" part
+          const match = selectedOption.textContent.match(/^(.+@)\s*\(/);
+          if (match) return match[1];
+        }
+      }
+      // Fallback: return the raw input value (i-address) if no dropdown match
+      return getGlobalSigningId();
+    };
+
+    const syncAutoFields = () => {
+      if (caFieldAttestor) caFieldAttestor.value = getSigningIdFullyQualifiedName();
+      if (caFieldRecipient && recipientIdentityInput) caFieldRecipient.value = recipientIdentityInput.value.trim();
+    };
+    // Sync on load
+    syncAutoFields();
+    // Sync when global signing ID or recipient changes
+    if (globalSigningIdSelect) globalSigningIdSelect.addEventListener("change", syncAutoFields);
+    if (globalSigningIdInput) globalSigningIdInput.addEventListener("input", syncAutoFields);
+    if (recipientIdentityInput) recipientIdentityInput.addEventListener("input", syncAutoFields);
+
+    // Extra field name mappings
+    const extraFieldNames = {
+      "iLB8SG7ErJtTYcG1f4w9RLuMJPpAsjFkiL": "First Name",
+      "iKRmfy4xgjWQyPdXYie6dJezRXF4aKdbHB": "Last Name",
+      "iHG6ALRUPyRcgJMsPqBmvUCZxe4PrMfgej": "Middle Name",
+      "iAQY8o4HwupzcJAw9aBtFwgrvWZGQStkge": "Phone Number",
+      "iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23": "Email",
+      "iEUYNTkw6kFhZWto7vyTpQqtdRL7eoKZY2": "Nationality",
+      "i9jHPJokwnLoCQ83P6jqezCcEZUD1g34B9": "Ethnicity",
+      "iMzGK44r6SNkzi3N3AmcZBtuysPvgYiRiT": "Weight",
+      "i9A1fD5sVwFFXzEmCJWSRDqN94PXp9oNaS": "Home Address",
+      "i5BJAwQbrP4Bht8gUpoqSrovuBwfRc6jiv": "Home Address Street1",
+      "iMx71C14hrBoWD3yyhYChmhJEw4Kqw1zj4": "Home Address Street2",
+      "i75ZpW5T6wgQEMVxyvqHT9ZaV4fjsQ7kws": "Home Address City",
+      "iRkYck3JowdFWmrM6VUAS8Wtpmxds2fLXS": "Home Address Region",
+      "iAL2FRG8PVi18fN8MatjXhV1YkuZr7PM4T": "Home Address Postcode",
+      "iABYGvas6uUDk9ejCkfCVLvE9PPJXgyCKX": "Home Address Country",
+      "iQrnvbCNWMaG6PjTmeXzrcuAXKsMzmNJWA": "ID Number Value",
+      "iSSZX5yUdQh7zLf1gUewH5rVfbXtSq2c4s": "ID Number Type",
+      "i5Xgd7Aqds922eE8FDBUsKHSgiig39AnfS": "Account ID",
+      "iNKVUvr5GzdCHgybMauK11DdZZUyWE3pe3": "Account UserID",
+      "i42uTbJmVBcPacY3Ak1g95LBg5rBBntQby": "Account Created At",
+      "iRJTZj7osY5EYA7pd7K3UcJVAApkvodDjZ": "Account Completed At",
+      "iGU6RCWyjU1sscCPLN77XhTESJ21JCTNxF": "Account Previous Attempt ID",
+      "i92YkV3FVGZfp5Ep3j1sfQUgqUS37M9v82": "Account Shareable URL",
+      "iL5diuVsHAG5DLVeyc8XYdEXR6fFro5G7s": "Account Template ID",
+      "i7eBZNzKrgFov6c2Sx2QecyEmPq2Mc4BGe": "Account Template Version",
+      "iJf3EbihEtdEpJjbQ6PgUaL3GxDgZRzSWk": "Account Status",
+      "iHPD8vB7jhtbuqPkUqzheqcZdfAfHUFVzM": "Over 18",
+      "iDuForPTZFeFBAgDX1HyrP3d6of7wzrRaS": "Over 25",
+      "iShgSBdiYDQnVwgNcDnSbNYHGU6CTwBDb1": "Gender",
+      "iLmLmsFMTUm4dd2iMuMe4xaMC8VSZN9soP": "Height",
+      "iRo2XT8tcMtLTpuPJ6V5WxbnVWa2CrcdsJ": "Eye Color",
+      "i8MhqW3ejupmV1M5UyhyhG13dkS8A7g7zg": "Verification Status",
+      "i8SSgM1z7XVoCtoP9CCsMms3zCndaNjtCe": "Personal Details",
+      "iRLT8V9NN178CvZQusJSHuyuFC2fD2QmE3": "Contact Details",
+      "iGmiLZ7J6GjxjZ4rkSMsDzyyvWtmMBjnbo": "Location",
+      "i8DUrZJJRjNQMJNeJ3Ti6pbpKPJ55LECyJ": "Banking Details",
+      "iCm3ERZoUw2ze1P11QyRUtvhKYovCWFXbT": "Documents",
+      "i4uE1EvnDbq9WGhF5UbBr6fbxNLsgk1eZ3": "Requesting IP Address"
+    };
+
+    // Add extra field button
+    if (addExtraFieldBtn && extraFieldSelect && extraFieldsContainer) {
+      addExtraFieldBtn.addEventListener("click", () => {
+        const selectedKey = extraFieldSelect.value;
+        if (!selectedKey) return;
+        const fieldName = extraFieldNames[selectedKey] || selectedKey;
+
+        // Check if already added
+        if (extraFieldsContainer.querySelector(`[data-vdxf-key="${selectedKey}"]`)) {
+          return; // Already exists
+        }
+
+        const entry = document.createElement("div");
+        entry.className = "ca-field-entry ca-extra-field";
+        entry.setAttribute("data-vdxf-key", selectedKey);
+        entry.innerHTML = `
+          <label style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <span style="min-width: 180px;">${fieldName}</span>
+            <input class="ca-field-value" type="text" placeholder="Enter value" style="flex: 1; min-width: 200px;" />
+            <button type="button" class="ca-remove-extra" title="Remove" style="flex: 0 0 auto;">&times;</button>
+          </label>
+          <span class="help" style="margin-left: 0;">${selectedKey}</span>
+        `;
+        extraFieldsContainer.appendChild(entry);
+
+        // Reset the dropdown
+        extraFieldSelect.value = "";
+      });
+
+      // Remove extra field (event delegation)
+      extraFieldsContainer.addEventListener("click", (e) => {
+        if (e.target && e.target.classList && e.target.classList.contains("ca-remove-extra")) {
+          e.target.closest(".ca-extra-field").remove();
+        }
+      });
+    }
+
+    // Fetch & Hash button
+    if (fetchHashButton) {
+      fetchHashButton.addEventListener("click", async () => {
+        if (fetchHashError) { fetchHashError.textContent = ""; fetchHashError.hidden = true; }
+        if (fetchHashStatus) setStatus(fetchHashStatus, "");
+
+        const url = downloadUrlInput?.value.trim();
+        if (!url) {
+          if (fetchHashError) { fetchHashError.textContent = "Enter a Download URL first."; fetchHashError.hidden = false; }
+          return;
+        }
+
+        fetchHashButton.disabled = true;
+        if (fetchHashStatus) setStatus(fetchHashStatus, "Fetching & hashing...");
+
+        try {
+          const response = await fetch("/api/fetch-and-hash-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "Failed to fetch and hash URL.");
+
+          if (datahashInput) {
+            datahashInput.value = data.dataHash;
+          }
+          if (fetchHashStatus) setStatus(fetchHashStatus, "Hash generated.");
+          setTimeout(() => { if (fetchHashStatus) setStatus(fetchHashStatus, ""); }, 3000);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unexpected error.";
+          if (fetchHashError) { fetchHashError.textContent = message; fetchHashError.hidden = false; }
+          if (fetchHashStatus) setStatus(fetchHashStatus, "");
+        } finally {
+          fetchHashButton.disabled = false;
+        }
+      });
+    }
+
+    // Create Attestation button
+    if (createAttestationBtn) {
+      createAttestationBtn.addEventListener("click", async () => {
+        if (attestationError) { attestationError.textContent = ""; attestationError.hidden = true; }
+        if (attestationStatus) setStatus(attestationStatus, "");
+
+        // Sync auto-filled fields before submitting
+        syncAutoFields();
+
+        try {
+          const signingId = getGlobalSigningId();
+          if (!signingId) throw new Error("Signing ID is required (set in the global header above).");
+
+          const label = attestationLabelInput ? attestationLabelInput.value.trim() : "";
+          if (!label) throw new Error("Attestation Label is required.");
+
+          const encryptToAddress = zAddressSelect ? zAddressSelect.value : "";
+          if (!encryptToAddress) throw new Error("Select an encrypt-to z-address. Click Refresh if the list is empty.");
+
+          // Gather all fields (default + extra)
+          const allFieldEntries = form.querySelectorAll(".ca-field-entry");
+          const mmrdata = [];
+          allFieldEntries.forEach((entry, i) => {
+            const vdxfKey = entry.getAttribute("data-vdxf-key");
+            const valueInput = entry.querySelector(".ca-field-value");
+            const value = valueInput ? valueInput.value.trim() : "";
+
+            if (value && vdxfKey) {
+              mmrdata.push({
+                flags: 0,
+                label: vdxfKey,
+                mimetype: "text/plain",
+                message: value
+              });
+            }
+          });
+
+          if (mmrdata.length === 0) {
+            throw new Error("At least one identity field must be filled in.");
+          }
+
+          createAttestationBtn.disabled = true;
+          if (attestationStatus) setStatus(attestationStatus, "Creating attestation...");
+
+          const response = await fetch("/api/create-attestation-tab", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              signingId,
+              encryptToAddress,
+              attestationLabel: label,
+              mmrdata
+            })
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "Failed to create attestation.");
+
+          // Display the pastebin data (JSON, hex, hash)
+          if (pastebinJsonEl && data.pastebinJson) {
+            pastebinJsonEl.textContent = JSON.stringify(data.pastebinJson, null, 2);
+          }
+          if (pastebinHexEl && data.pastebinHex) {
+            pastebinHexEl.value = data.pastebinHex;
+          }
+          if (pastebinHashEl && data.pastebinHash) {
+            pastebinHashEl.value = data.pastebinHash;
+          }
+          // Auto-fill the data hash field with the pastebin hash
+          if (datahashInput && data.pastebinHash) {
+            datahashInput.value = data.pastebinHash;
+          }
+          if (pastebinDataSection) {
+            pastebinDataSection.hidden = false;
+          }
+
+          // Also populate signableObjects for reference (not used in QR anymore)
+          if (signableObjectsTextarea) {
+            signableObjectsTextarea.value = JSON.stringify(data.pastebinJson || {}, null, 2);
+          }
+
+          if (attestationStatus) setStatus(attestationStatus, "Attestation created and added to Signable Objects.");
+          setTimeout(() => { if (attestationStatus) setStatus(attestationStatus, ""); }, 4000);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Unexpected error.";
+          if (attestationError) { attestationError.textContent = message; attestationError.hidden = false; }
+          if (attestationStatus) setStatus(attestationStatus, "");
+        } finally {
+          createAttestationBtn.disabled = false;
+        }
+      });
+    }
+
+    // Generate QR submit
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError(errorEl);
+      resultEl.hidden = true;
+      setStatus(statusEl, "Generating QR code...");
+      submitButton.disabled = true;
+
+      try {
+        const signingId = getGlobalSigningId();
+        if (!signingId) throw new Error("Signing ID is required (set in the global header above).");
+
+        const requestId = getInputValue("ca-request-id").trim();
+        if (!requestId) throw new Error("Request ID is required.");
+
+        const recipientIdentity = getInputValue("ca-recipient-identity").trim();
+        if (!recipientIdentity) throw new Error("Recipient Identity is required.");
+
+        const downloadUrl = getInputValue("ca-download-url").trim() || undefined;
+        const dataHash = getInputValue("ca-datahash").trim() || undefined;
+        const redirectsText = getInputValue("ca-redirects");
+        const redirects = parseJsonField(redirectsText, "Redirects JSON", false);
+
+        if (dataHash && !/^[0-9a-fA-F]{64}$/.test(dataHash)) {
+          throw new Error("Data hash must be exactly 32 bytes (64 hex characters).");
+        }
+
+        const payload = {
+          signingId,
+          requestId,
+          redirects,
+          downloadUrl,
+          dataHash,
+          recipientIdentity
+        };
+
+        const response = await fetch("/api/generate-attestation-qr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Failed to generate QR.");
+
+        qrImage.src = data.qrDataUrl;
+        qrImage.alt = "QR Code for attestation data packet";
+        deeplinkEl.value = data.deeplink;
+
+        const parsedJsonEl = document.getElementById("ca-parsed-json");
+        if (parsedJsonEl && data.parsedRequest) {
+          parsedJsonEl.textContent = JSON.stringify(data.parsedRequest, null, 2);
+        }
+        resultEl.hidden = false;
+
+        setStatus(statusEl, "QR generated.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unexpected error.";
+        showError(errorEl, message);
+        setStatus(statusEl, "");
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    // Copy deeplink
+    copyButton.addEventListener("click", async () => {
+      if (!deeplinkEl.value) return;
+      try {
+        await navigator.clipboard.writeText(deeplinkEl.value);
+        setStatus(statusEl, "Deeplink copied.");
+        setTimeout(() => setStatus(statusEl, ""), 2000);
+      } catch (error) {
+        setStatus(statusEl, "Copy failed. Select and copy manually.");
+      }
+    });
+
+    // Copy pastebin hex
+    if (copyPastebinHexBtn && pastebinHexEl) {
+      copyPastebinHexBtn.addEventListener("click", async () => {
+        if (!pastebinHexEl.value) return;
+        try {
+          await navigator.clipboard.writeText(pastebinHexEl.value);
+          copyPastebinHexBtn.textContent = "Copied!";
+          setTimeout(() => { copyPastebinHexBtn.textContent = "Copy Hex Data"; }, 2000);
+        } catch (error) {
+          copyPastebinHexBtn.textContent = "Copy failed";
+          setTimeout(() => { copyPastebinHexBtn.textContent = "Copy Hex Data"; }, 2000);
+        }
+      });
+    }
+
+    // Copy pastebin hash
+    if (copyPastebinHashBtn && pastebinHashEl) {
+      copyPastebinHashBtn.addEventListener("click", async () => {
+        if (!pastebinHashEl.value) return;
+        try {
+          await navigator.clipboard.writeText(pastebinHashEl.value);
+          copyPastebinHashBtn.textContent = "Copied!";
+          setTimeout(() => { copyPastebinHashBtn.textContent = "Copy Hash"; }, 2000);
+        } catch (error) {
+          copyPastebinHashBtn.textContent = "Copy failed";
+          setTimeout(() => { copyPastebinHashBtn.textContent = "Copy Hash"; }, 2000);
+        }
+      });
+    }
+
+  };
+
   // ── Init ─────────────────────────────────────────────────────────────
 
   setupTabs();
@@ -1886,6 +2323,7 @@
   setupAppEncryptionForm();
   setupDataPacketForm();
   setupUserDataForm();
+  setupCreateAttestationForm();
   setupCopyButtons();
   wireGlobalSigningIdDropdown();
   loadIdentities();

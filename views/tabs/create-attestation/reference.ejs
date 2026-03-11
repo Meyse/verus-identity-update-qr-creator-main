@@ -1,0 +1,59 @@
+<aside class="split-reference">
+  <div class="ref-card">
+    <h3>Create Attestation</h3>
+    <p class="ref-desc">This tab builds a complete Data Packet QR for transmitting a signed attestation to a user. It automatically sets the following flags:</p>
+    <div class="ref-snippet">
+<pre><code>FLAG_HAS_REQUEST_ID (1)
+FLAG_FOR_TRANSMITTAL_TO_USER (16)
+FLAG_HAS_URL_FOR_DOWNLOAD (32)</code></pre>
+    </div>
+    <p class="ref-desc">The attestation signature is included in the data hosted at the URL, not in the QR itself.</p>
+  </div>
+
+  <div class="ref-card">
+    <h3>Workflow</h3>
+    <p class="ref-desc">1. Fill in identity fields (attestation name, date of birth, etc.)</p>
+    <p class="ref-desc">2. Attestor &amp; Recipient are auto-filled from the global Signing ID and Recipient Identity</p>
+    <p class="ref-desc">3. Optionally add extra fields from the dropdown</p>
+    <p class="ref-desc">4. Click <strong>Create Attestation</strong> to sign via RPC</p>
+    <p class="ref-desc">4. Copy the <strong>Pastebin Hex Data</strong> and upload to pastebin.com</p>
+    <p class="ref-desc">5. Enter the raw pastebin URL in the <strong>Download URL</strong> field</p>
+    <p class="ref-desc">6. Optionally click <strong>Fetch &amp; Hash</strong> to verify the hash matches</p>
+    <p class="ref-desc">7. Click <strong>Generate QR</strong></p>
+  </div>
+
+  <div class="ref-card">
+    <h3>Default Fields</h3>
+    <p class="ref-desc">The following VDXF identity keys are shown by default:</p>
+    <div class="ref-snippet">
+<pre><code>ATTESTATION_NAME
+IDENTITY_ATTESTOR       (auto-filled from Signing ID)
+IDENTITY_ATTESTATION_RECIPIENT (auto-filled from Recipient)
+IDENTITY_DATEOFBIRTH
+IDENTITY_OVER21</code></pre>
+    </div>
+  </div>
+
+  <div class="ref-card">
+    <h3>Additional Fields</h3>
+    <p class="ref-desc">Use the "Add Field" dropdown to include additional identity attributes such as phone number, email, nationality, home address, ID numbers, and more.</p>
+  </div>
+
+  <div class="ref-card">
+    <h3>Upload Data</h3>
+    <p class="ref-desc">After creating the attestation, the hex data and its SHA256 hash are shown immediately. Copy the hex and paste to <a href="https://pastebin.com" target="_blank">pastebin.com</a> (raw paste). The hash is auto-filled into the Data Hash field.</p>
+    <p class="ref-desc">The QR code only contains a lightweight URL reference pointing to this data &mdash; not the attestation data itself.</p>
+  </div>
+
+  <div class="ref-card">
+    <h3>Redirects JSON</h3>
+    <p class="ref-desc">Configure redirect URIs that the wallet will call after processing.</p>
+    <div class="ref-snippet">
+<pre><code>[
+  {"type":"1","uri":"https://yoursite.com/callback"},
+  {"type":"2","uri":"https://api.yoursite.com/post"}
+]</code></pre>
+      <button class="copy-btn" type="button" data-copy='[{"type":"1","uri":"https://yoursite.com/callback"},{"type":"2","uri":"https://api.yoursite.com/post"}]' title="Copy">Copy</button>
+    </div>
+  </div>
+</aside>

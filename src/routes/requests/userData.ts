@@ -232,7 +232,9 @@ export async function generateUserDataQr(req: Request, res: Response): Promise<v
       scale: 6
     });
 
-    res.json({ deeplink, qrDataUrl });
+    const parsedRequest = primitives.GenericRequest.fromWalletDeeplinkUri(deeplink).toJson();
+
+    res.json({ deeplink, qrDataUrl, parsedRequest });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error.";
     const status = error instanceof ValidationError ? 400 : 500;

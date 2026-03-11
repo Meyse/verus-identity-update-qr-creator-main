@@ -42,3 +42,4 @@
     );
 
     const deeplink = req.toWalletDeeplinkUri();
+```
