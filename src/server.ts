@@ -15,14 +15,36 @@ const {
   RPC_PASSWORD
 } = require("../config.js");
 
+const normalizeBasePath = (value?: string) => {
+  if (!value) {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "/") {
+    return "";
+  }
+
+  return `/${trimmed.replace(/^\/+|\/+$/g, "")}`;
+};
+
+const defaultBasePath = normalizeBasePath(process.env.BASE_PATH);
+
 const app = express();
 app.set("view engine", "ejs");
 app.set("views", path.resolve(__dirname, "..", "views"));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.resolve(__dirname, "..", "public")));
 
-app.get("/", (_req, res) => {
-  res.render("index");
+app.get("/", (req, res) => {
+  const requestedBasePath = typeof req.query.basePath === "string"
+    ? normalizeBasePath(req.query.basePath)
+    : "";
+  const assetBaseHref = requestedBasePath || defaultBasePath
+    ? `${requestedBasePath || defaultBasePath}/`
+    : "/";
+
+  res.render("index", { assetBaseHref });
 });
 
 app.get("/api/identities", async (_req, res) => {

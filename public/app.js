@@ -256,7 +256,7 @@
     if (!select) return;
 
     try {
-      const res = await fetch("/api/identities");
+      const res = await fetch("api/identities");
       const data = await res.json();
       const identities = Array.isArray(data.identities) ? data.identities : [];
 
@@ -368,7 +368,7 @@
     if (!select) return;
 
     try {
-      const res = await fetch("/api/currencies");
+      const res = await fetch("api/currencies");
       const data = await res.json();
       cachedCurrencies = Array.isArray(data.currencies) ? data.currencies : [];
       renderCurrencyOptions(getInputValue("invoice-currency-search"));
@@ -559,7 +559,7 @@
           redirects
         };
 
-        const response = await fetch("/api/generate-qr", {
+        const response = await fetch("api/generate-qr", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -687,7 +687,7 @@
           redirects
         };
 
-        const response = await fetch("/api/generate-auth-qr", {
+        const response = await fetch("api/generate-auth-qr", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -889,7 +889,7 @@
           redirects
         };
 
-        const response = await fetch("/api/generate-invoice-qr", {
+        const response = await fetch("api/generate-invoice-qr", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1005,7 +1005,7 @@
           redirects
         };
 
-        const response = await fetch("/api/generate-app-encryption-qr", {
+        const response = await fetch("api/generate-app-encryption-qr", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1162,7 +1162,7 @@
         if (fetchHashStatus) setStatus(fetchHashStatus, "Fetching & hashing...");
 
         try {
-          const response = await fetch("/api/fetch-and-hash-url", {
+          const response = await fetch("api/fetch-and-hash-url", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url })
@@ -1293,7 +1293,7 @@
       if (!zAddressSelect) return;
       zAddressSelect.innerHTML = '<option value="">Loading...</option>';
       try {
-        const resp = await fetch("/api/z-addresses");
+        const resp = await fetch("api/z-addresses");
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.error || "Failed to load z-addresses.");
         const addresses = data.addresses || [];
@@ -1413,7 +1413,7 @@
           createAttestationBtn.disabled = true;
           if (attestationStatus) setStatus(attestationStatus, "Creating attestation...");
 
-          const response = await fetch("/api/create-attestation", {
+          const response = await fetch("api/create-attestation", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1577,7 +1577,7 @@
             dataHash
           };
 
-          const response = await fetch("/api/sign-data-packet", {
+          const response = await fetch("api/sign-data-packet", {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
@@ -1682,7 +1682,7 @@
           recipientIdentity: flagForTransmittalToUser ? getInputValue("data-packet-recipient-identity").trim() : undefined
         };
 
-        const response = await fetch("/api/generate-data-packet-qr", {
+        const response = await fetch("api/generate-data-packet-qr", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1839,7 +1839,7 @@
           recipientIdentity
         };
 
-        const response = await fetch("/api/generate-user-data-qr", {
+        const response = await fetch("api/generate-user-data-qr", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1943,7 +1943,7 @@
       if (!zAddressSelect) return;
       zAddressSelect.innerHTML = '<option value="">Loading...</option>';
       try {
-        const resp = await fetch("/api/z-addresses");
+        const resp = await fetch("api/z-addresses");
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.error || "Failed to load z-addresses.");
         const addresses = data.addresses || [];
@@ -2089,7 +2089,7 @@
         if (fetchHashStatus) setStatus(fetchHashStatus, "Fetching & hashing...");
 
         try {
-          const response = await fetch("/api/fetch-and-hash-url", {
+          const response = await fetch("api/fetch-and-hash-url", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url })
@@ -2156,7 +2156,7 @@
           createAttestationBtn.disabled = true;
           if (attestationStatus) setStatus(attestationStatus, "Creating attestation...");
 
-          const response = await fetch("/api/create-attestation-tab", {
+          const response = await fetch("api/create-attestation-tab", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -2241,7 +2241,7 @@
           recipientIdentity
         };
 
-        const response = await fetch("/api/generate-attestation-qr", {
+        const response = await fetch("api/generate-attestation-qr", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
