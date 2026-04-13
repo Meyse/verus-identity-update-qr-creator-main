@@ -2200,9 +2200,8 @@
               });
               const storeData = await storeResp.json().catch(() => ({}));
               if (storeResp.ok && storeData.id) {
-                // Build the download URL from the current page origin + base path
-                const base = window.location.href.replace(/\/[^/]*$/, "");
-                downloadUrlInput.value = base + "/attestation/" + storeData.id;
+                // Build the download URL using the <base href> so it works behind reverse proxies
+                downloadUrlInput.value = new URL("attestation/" + storeData.id, document.baseURI).href;
               }
             } catch (storeErr) {
               console.error("Failed to auto-store attestation:", storeErr);
