@@ -2188,6 +2188,27 @@
           if (datahashInput && data.pastebinHash) {
             datahashInput.value = data.pastebinHash;
           }
+
+          // Auto-store attestation hex on server and populate download URL
+          if (data.pastebinHex && downloadUrlInput) {
+            try {
+              if (attestationStatus) setStatus(attestationStatus, "Storing attestation data...");
+              const storeResp = await fetch("api/store-attestation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hex: data.pastebinHex })
+              });
+              const storeData = await storeResp.json().catch(() => ({}));
+              if (storeResp.ok && storeData.id) {
+                // Build the download URL from the current page origin + base path
+                const base = window.location.href.replace(/\/[^/]*$/, "");
+                downloadUrlInput.value = base + "/attestation/" + storeData.id;
+              }
+            } catch (storeErr) {
+              console.error("Failed to auto-store attestation:", storeErr);
+            }
+          }
+
           if (pastebinDataSection) {
             pastebinDataSection.hidden = false;
           }
@@ -2264,7 +2285,10 @@
         }
         resultEl.hidden = false;
 
-        setStatus(statusEl, "QR generated.");
+        const verifiedMsg = data.deeplinkVerified
+          ? "QR generated. Deeplink round-trip verified."
+          : "QR generated. Warning: deeplink verification not confirmed.";
+        setStatus(statusEl, verifiedMsg);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unexpected error.";
         showError(errorEl, message);

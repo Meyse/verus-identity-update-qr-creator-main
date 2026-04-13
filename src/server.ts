@@ -1,4 +1,6 @@
 import * as path from "path";
+import * as fs from "fs";
+import * as crypto from "crypto";
 import express = require("express");
 import { VerusIdInterface, primitives } from "verusid-ts-client";
 import { generateQr, generateAuthQr, generateInvoiceQr, generateAppEncryptionQr, generateDataPacketQr, signDataPacket, fetchAndHashUrl, listZAddresses, createAttestation, generateUserDataQr, createAttestationForTab, signAttestationPacket, generateAttestationQr } from "./routes";
@@ -233,6 +235,41 @@ app.get("/api/currencies", async (_req, res) => {
     console.error("Failed to list currencies:", error);
     res.json({ currencies: [] });
   }
+});
+
+// ── Attestation data storage ──────────────────────────────────────────
+const attestationDir = path.resolve(__dirname, "..", "data", "attestations");
+fs.mkdirSync(attestationDir, { recursive: true });
+
+app.post("/api/store-attestation", (req, res) => {
+  try {
+    const { hex } = req.body as { hex?: string };
+    if (!hex || typeof hex !== "string" || !/^[0-9a-fA-F]+$/.test(hex)) {
+      res.status(400).json({ error: "hex must be a non-empty hex string." });
+      return;
+    }
+    const id = crypto.randomBytes(16).toString("hex");
+    fs.writeFileSync(path.join(attestationDir, id), hex, "utf-8");
+    res.json({ id });
+  } catch (error) {
+    console.error("Failed to store attestation:", error);
+    res.status(500).json({ error: "Failed to store attestation data." });
+  }
+});
+
+app.get("/attestation/:id", (req, res) => {
+  const id = req.params.id;
+  if (!/^[0-9a-fA-F]{32}$/.test(id)) {
+    res.status(400).send("Invalid attestation ID.");
+    return;
+  }
+  const filePath = path.join(attestationDir, id);
+  if (!fs.existsSync(filePath)) {
+    res.status(404).send("Attestation not found.");
+    return;
+  }
+  const hex = fs.readFileSync(filePath, "utf-8");
+  res.type("text/plain").send(hex);
 });
 
 app.get("/api/generate-request-id", (_req, res) => {

@@ -206,7 +206,7 @@ function buildUrlDataDescriptor(url: string, dataHash?: string): DataDescriptor 
   const urlRefParams: Record<string, unknown> = { version: URLRef.LAST_VERSION, url: url };
   if (dataHashBuffer) {
     urlRefParams.flags = URLRef.FLAG_HAS_HASH;
-    urlRefParams.data_hash = dataHashBuffer;
+    urlRefParams.dataHash = dataHashBuffer;
   }
   const urlRef = new URLRef(urlRefParams as any);
 

@@ -78,7 +78,7 @@ function buildUrlDataDescriptor(url: string, dataHash?: string): DataDescriptor 
   const urlRefParams: Record<string, unknown> = { version: URLRef.LAST_VERSION, url: url };
   if (dataHashBuffer) {
     urlRefParams.flags = URLRef.FLAG_HAS_HASH;
-    urlRefParams.data_hash = dataHashBuffer;
+    urlRefParams.dataHash = dataHashBuffer;
   }
   const urlRef = new URLRef(urlRefParams as any);
   const ccdref = new CrossChainDataRef(urlRef);
@@ -431,13 +431,32 @@ export async function generateAttestationQr(req: Request, res: Response): Promis
       { auth: { username: rpcUser, password: rpcPassword } }
     );
 
+    // Verify round-trip: decode the deeplink URI back into a GenericRequest
     const deeplink = reqToSign.toWalletDeeplinkUri();
-    const back = primitives.GenericRequest.fromWalletDeeplinkUri(deeplink);
+    let back: primitives.GenericRequest;
+    try {
+      back = primitives.GenericRequest.fromWalletDeeplinkUri(deeplink);
+    } catch (decodeErr) {
+      console.error("Deeplink round-trip decode failed:", decodeErr);
+      throw new Error("Failed to decode the generated deeplink URI back into a GenericRequest. The encoded data may be corrupt.");
+    }
+
+    // Compare the re-encoded buffer with the original to ensure byte-level fidelity
+    const originalBuf = reqToSign.toBuffer();
+    const decodedBuf = back.toBuffer();
+    if (!originalBuf.equals(decodedBuf)) {
+      console.error("Deeplink round-trip buffer mismatch.",
+        "Original:", originalBuf.toString('hex'),
+        "Decoded:", decodedBuf.toString('hex'));
+      throw new Error("Deeplink round-trip buffer mismatch: the decoded request does not match the original.");
+    }
+
+    // Verify the signature via RPC
     const resultok = await verusId.verifyGenericRequest(back);
 
     if (!resultok) {
       console.log("Attestation QR verification failed:", JSON.stringify(reqToSign.toJson(), null, 2), JSON.stringify(back.toJson(), null, 2));
-      throw new Error("Failed to verify the generated GenericRequest.");
+      throw new Error("Failed to verify the generated GenericRequest signature.");
     }
 
     const qrDataUrl = await QRCode.toDataURL(deeplink, {
@@ -457,7 +476,7 @@ export async function generateAttestationQr(req: Request, res: Response): Promis
       }
     }
 
-    res.json({ deeplink, qrDataUrl, parsedRequest });
+    res.json({ deeplink, qrDataUrl, parsedRequest, deeplinkVerified: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error.";
     const status = error instanceof ValidationError ? 400 : 500;

@@ -72,7 +72,7 @@ function buildInvoiceRequest(params: {
     const destType = params.destinationType === "id" ? DEST_ID : DEST_PKH;
     destination = new TransferDestination({
       type: destType,
-      destination_bytes: fromBase58Check(params.destinationAddress).hash
+      destinationBytes: fromBase58Check(params.destinationAddress).hash
     });
   }
 

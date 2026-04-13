@@ -49,7 +49,7 @@ const createUrlDataDescriptor = (url = "https://example.com/data.json", dataHash
   const urlRefParams = { version: URLRef.LAST_VERSION, url: url };
   if (dataHash) {
     urlRefParams.flags = URLRef.FLAG_HAS_HASH;
-    urlRefParams.data_hash = Buffer.from(dataHash, 'hex');
+    urlRefParams.dataHash = Buffer.from(dataHash, 'hex');
   }
   const urlRef = new URLRef(urlRefParams);
   const ccdref = new CrossChainDataRef(urlRef);
