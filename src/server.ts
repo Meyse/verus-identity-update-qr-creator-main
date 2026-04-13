@@ -1,6 +1,6 @@
 import * as path from "path";
 import express = require("express");
-import { VerusIdInterface } from "verusid-ts-client";
+import { VerusIdInterface, primitives } from "verusid-ts-client";
 import { generateQr, generateAuthQr, generateInvoiceQr, generateAppEncryptionQr, generateDataPacketQr, signDataPacket, fetchAndHashUrl, listZAddresses, createAttestation, generateUserDataQr, createAttestationForTab, signAttestationPacket, generateAttestationQr } from "./routes";
 import {
   SYSTEM_ID_TESTNET,
@@ -233,6 +233,15 @@ app.get("/api/currencies", async (_req, res) => {
     console.error("Failed to list currencies:", error);
     res.json({ currencies: [] });
   }
+});
+
+app.get("/api/generate-request-id", (_req, res) => {
+  const crypto = require("crypto");
+  const payload = crypto.randomBytes(20);
+
+  const base58Add = primitives.toBase58Check(payload, 0x66); // version 102 (I_ADDR)
+  
+  res.json({ requestId: base58Add });
 });
 
 app.post("/api/generate-qr", generateQr);

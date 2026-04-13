@@ -217,12 +217,16 @@
 
   const generateRequestId = async () => {
     const cryptoObj = globalThis.crypto;
-    if (!cryptoObj?.getRandomValues || !cryptoObj?.subtle) {
-      throw new Error("Secure crypto is not available in this browser.");
+    if (cryptoObj?.getRandomValues && cryptoObj?.subtle) {
+      const payload = new Uint8Array(REQUEST_ID_BYTES);
+      cryptoObj.getRandomValues(payload);
+      return base58CheckEncode(I_ADDR_VERSION, payload);
     }
-    const payload = new Uint8Array(REQUEST_ID_BYTES);
-    cryptoObj.getRandomValues(payload);
-    return base58CheckEncode(I_ADDR_VERSION, payload);
+    // Fallback: ask the server to generate the request ID
+    const resp = await fetch("api/generate-request-id");
+    if (!resp.ok) throw new Error("Failed to generate request ID from server.");
+    const data = await resp.json();
+    return data.requestId;
   };
 
   const setupRequestIdGenerator = (inputEl, buttonEl, statusEl, errorEl) => {
